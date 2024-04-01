@@ -32,7 +32,18 @@ We need to use OCR for extracting the PDFs
 Use the `extract.py` script to extract the text from the PDFs
 
 
+<!-- 
+sudo apt install imagemagick -y
+sudo cp /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.backup
+
+sudo sed -i 's/rights="none"/rights="read|write"/' /etc/ImageMagick-*/policy.xml
+
+
+srcext=pdf; find data/raw/ -type f -name "*.$srcext" -print0 | xargs -0 -P $(nproc --all) -I{} sh -c 'convert -density 300 "$1" -quality 100 "${1%.*}_page_%03d.png" | echo "" ' -- {} | tqdm --unit .$srcext --total $(find data/raw/ -type f -name "*.$srcext" | wc -l) > /dev/null
+ -->
+
 ```bash
-python preprocess.py data/raw --output_dir data/processed
+
+python preprocess.py data/raw --out_dir data/processed
 ```
 

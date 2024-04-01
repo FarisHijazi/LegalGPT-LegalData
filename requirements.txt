@@ -1,2 +1,7 @@
 pdf2image
 pandas
+google-cloud-vision
+tqdm
+pydantic
+pillow
+dvc
