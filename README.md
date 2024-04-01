@@ -44,6 +44,6 @@ srcext=pdf; find data/raw/ -type f -name "*.$srcext" -print0 | xargs -0 -P $(npr
 
 ```bash
 
-python preprocess.py data/raw --out_dir data/processed
+python convert.py data/raw --out_dir data/01_converted
 ```
 
