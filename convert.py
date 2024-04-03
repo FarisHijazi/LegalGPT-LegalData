@@ -85,6 +85,8 @@ import mimetypes
 from PIL import Image
 from PIL import ImageDraw
 from io import BytesIO
+from joblib import Memory
+import hashlib
 
 # Supported mime_type: application/pdf, image/tiff, image/gif
 client = vision_v1.ImageAnnotatorClient()
@@ -109,8 +111,13 @@ def annotate_and_save(image_path, image_response, file_content=None):
     # Draw rectangles for each block
     for page in image_response.full_text_annotation.pages:
         for block in page.blocks:
-            vertices = [(vertex.x, vertex.y) for vertex in block.bounding_box.vertices]
-            draw.rectangle([vertices[0], vertices[2]], outline="red")
+            try:
+                vertices = [
+                    (vertex.x, vertex.y) for vertex in block.bounding_box.vertices
+                ]
+                draw.rectangle([vertices[0], vertices[2]], outline="red")
+            except Exception as e:
+                print("ERROR: Failed to draw rectangle for block", e)
 
     # Create the new file name
     new_file_name = (
@@ -126,7 +133,16 @@ def annotate_and_save(image_path, image_response, file_content=None):
     # plt.show()
 
 
-# annotate_and_save(image_path, content)
+# Create a memory object for caching
+memory = Memory("./cachedir", verbose=0)
+
+
+def hash_content(content):
+    # Create a hash of the content to use as a unique identifier
+    return hashlib.sha256(content).hexdigest()
+
+
+@memory.cache
 def google_ocr_single_image(image):
     """
     image: could be path or content
@@ -135,11 +151,13 @@ def google_ocr_single_image(image):
         content = read_file_content(image)
         pimage = Image.open(BytesIO(content))
         mime_type, _ = mimetypes.guess_type(image)
-    else:
+    elif isinstance(image, bytes):
         content = image
         # guess the mime type
         pimage = Image.open(BytesIO(content))
         mime_type = "image/" + pimage.format.lower()
+    else:
+        raise ValueError("image should be a path or bytes")
 
     if mime_type is None:
         raise Exception(f"Failed to guess the mime type of {image}")
@@ -196,10 +214,8 @@ def google_ocr_single_image(image):
     return results, image_response
 
 
-# # Create a ThreadPoolExecutor
-# with ThreadPoolExecutor(max_workers=5) as executor:
-#     # Use map to execute the function in parallel
-#     results = executor.map(google_ocr_single_image, file_paths)
+# Update the function call to use the hashed content as the argument
+google_ocr_single_image = memory.cache(google_ocr_single_image)
 
 
 def process_file(file_path_inpath):
@@ -232,12 +248,14 @@ def process_file(file_path_inpath):
                 print("wrote to ", image_path + ".annotation.json")
 
             # # Create a ThreadPoolExecutor
-            # with ThreadPoolExecutor(max_workers=5) as executor:
-            #     # Use map to execute the function in parallel
-            #     executor.map(process_image, zip(range(len(images)), images, [out_path]*len(images)))
-            list(
-                map(process_image, range(len(images)), images, [out_path] * len(images))
-            )
+            with ThreadPoolExecutor(
+                max_workers=1
+            ) as executor:  # setting this to >1 might cause joblib issues
+                # Use map to execute the function in parallel
+                # executor.map(process_image, zip(range(len(images)), images, [out_path]*len(images)))
+                executor.map(
+                    process_image, range(len(images)), images, [out_path] * len(images)
+                )
 
         elif file_path.suffix in [".json"]:
             with open(file_path, "r") as f:
@@ -278,9 +296,7 @@ if __name__ == "__main__":
     file_paths = list(Path(args.data_root).rglob("**/*.*"))
 
     def init_main():
-        with multiprocessing.Pool(
-            processes=int(multiprocessing.cpu_count() * 1.0)
-        ) as pool:
+        with multiprocessing.Pool(int(multiprocessing.cpu_count() * 0.8)) as pool:
             with tqdm(total=len(file_paths)) as pbar:
                 for _ in pool.imap_unordered(
                     process_file, zip(file_paths, [args.data_root] * len(file_paths))
