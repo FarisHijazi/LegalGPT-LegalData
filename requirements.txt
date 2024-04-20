@@ -1,11 +1,12 @@
+azure-ai-vision-imageanalysis
+azure-cognitiveservices-vision-computervision==0.9.0
 dvc
+# optional
 google-cloud-vision
-hashlib
 joblib
 pandas
 pdf2image
 pillow
 pydantic
 pytest
-subprocess
 tqdm

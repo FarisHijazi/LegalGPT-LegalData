@@ -24,18 +24,19 @@ represents a single file
 """
 
 import argparse
+import io
 import json
 import mimetypes
 import multiprocessing
 import os
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 import pdf2image
-from google.cloud import vision_v1
 from google.cloud.vision_v1.types.image_annotator import AnnotateImageResponse
 from joblib import Memory
 from PIL import Image, ImageDraw
@@ -62,11 +63,41 @@ parser.add_argument(
     action='store_true',
     help="Don't use OCR cache, will run OCR on all images even those it's seen before",
 )
+# add argument list to whitelist specific file extensions
+parser.add_argument(
+    '--ocr',
+    default='google',
+    choices=['google', 'azure'],
+    help='choose OCR provider: google or azure',
+)
+# add argument list to whitelist specific file extensions
+parser.add_argument(
+    '--whitelist',
+    default=['.pdf', '.xls', '.xlsx', '.csv', '.txt', '.json'],
+    nargs='+',
+    help='List of file extensions to whitelist',
+)
+# set number of concurrent threads/processes
+parser.add_argument(
+    '-p',
+    '--processors',
+    default=int(multiprocessing.cpu_count() * 0.8),
+    type=int,
+    help='Number of concurrent processes to run',
+)
 args = parser.parse_args()
 
 
-# Supported mime_type: application/pdf, image/tiff, image/gif
-client = vision_v1.ImageAnnotatorClient()
+if args.ocr == 'google':
+    from google.cloud import vision_v1
+
+    # Supported mime_type: application/pdf, image/tiff, image/gif
+    google_vision_client = vision_v1.ImageAnnotatorClient()
+else:
+    from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+    from msrest.authentication import CognitiveServicesCredentials
+
+    computervision_client = ComputerVisionClient(os.environ['VISION_ENDPOINT'], CognitiveServicesCredentials(os.environ['VISION_KEY']))
 
 
 def read_file_content(file_path):
@@ -78,11 +109,18 @@ def get_git_hash():
     """get git hash of the current commit for this file convert.py"""
     # check if there are any changes to the current file, if so, raise an exception
     if subprocess.check_output(['git', 'status', '--porcelain', __file__]):
-        raise Exception('ERROR: There are uncommitted changes to this file')
+        raise Exception(
+            'ERROR: There are uncommitted changes to this file, please commit them before running this script, this is to verify script and data integrity.'
+        )
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('utf-8')
 
 
-def annotate_and_save(image_path, image_response, file_content=None):
+# get git hash:
+GIT_HASH = get_git_hash()
+# GIT_HASH = None
+
+
+def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
     # Get the image
     image_path = Path(image_path)
     if file_content is None:
@@ -100,7 +138,7 @@ def annotate_and_save(image_path, image_response, file_content=None):
                 vertices = [(vertex.x, vertex.y) for vertex in block.bounding_box.vertices]
                 draw.rectangle([vertices[0], vertices[2]], outline='red')
             except Exception as e:
-                print('ERROR: Failed to draw rectangle for block', e)
+                print('\nERROR: Failed to draw rectangle for block', e)
 
     # Create the new file name
     new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
@@ -109,34 +147,41 @@ def annotate_and_save(image_path, image_response, file_content=None):
     print('saved to ', new_file_name)
     image.save(new_file_name)
 
-    # import matplotlib.pyplot as plt
-    # plt.imshow(image)
-    # plt.show()
+
+def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
+    # Get the image
+    image_path = Path(image_path)
+    if file_content is None:
+        image = Image.open(BytesIO(file_content))
+    else:
+        image = Image.open(image_path)
+
+    # Create a draw object
+    draw = ImageDraw.Draw(image)
+
+    # Loop over each line in the result
+    for text_result in read_result.analyze_result.read_results:
+        for line in text_result.lines:
+            # Get the bounding box coordinates
+            bounding_box = line.bounding_box
+
+            # Draw rectangle
+            draw.rectangle([(bounding_box[0], bounding_box[1]), (bounding_box[4], bounding_box[5])], outline='red')
+
+    # Create the new file name
+    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
+
+    # Save the image
+    image.save(new_file_name)
+    print('azure_ocr_annotate_and_save() saved to ', new_file_name)
 
 
 # Create a memory object for caching
 memory = Memory('./cachedir', verbose=0)
 
 
-def format_ocr_response(image_response: AnnotateImageResponse):
-    image_response_dict = {}
-    image_response_dict['full_text'] = image_response.full_text_annotation.text
-    image_response_dict['pages'] = []
-    for page in image_response.full_text_annotation.pages:  # this is always one page
-        page_dict = {}
-        page_dict['blocks'] = []
-        for block in page.blocks:
-            block_dict = []
-            for par in block.paragraphs:
-                word_strs = ' '.join([''.join(symbol.text for symbol in word.symbols) for word in par.words])
-                block_dict.append(word_strs)
-            page_dict['blocks'].append(block_dict)
-        image_response_dict['pages'].append(page_dict)
-    return image_response_dict
-
-
 @memory.cache
-def google_ocr_single_image(image) -> AnnotateImageResponse:
+def google_ocr_single_image(image: bytes) -> AnnotateImageResponse:
     """
     image: could be path or content
     """
@@ -176,7 +221,7 @@ def google_ocr_single_image(image) -> AnnotateImageResponse:
     # the first, second, and last page of the document to be processed.
     requests = [{'input_config': input_config, 'features': features, 'pages': []} for input_config in input_configs]
 
-    response = client.batch_annotate_files(requests=requests)
+    response = google_vision_client.batch_annotate_files(requests=requests)
     assert len(response.responses[0].responses) == 1, 'FATAL ERROR: something is wrong with the number of responses'
     image_response = response.responses[0].responses[0]
 
@@ -187,6 +232,41 @@ if args.no_ocr_cache:
     google_ocr_single_image = memory.cache(google_ocr_single_image)
 
 
+@memory.cache
+def azure_ocr_single_image(image: bytes):
+    '''
+    OCR: Read File using the Read API, extract text - remote
+    This example will extract text in an image, then print results, line by line.
+    This API call can also extract handwriting style text (not shown).
+    '''
+    read_response = computervision_client.read_in_stream(io.BytesIO(image), raw=True)
+
+    # Get the operation location (URL with an ID at the end) from the response
+    read_operation_location = read_response.headers['Operation-Location']
+    # Grab the ID from the URL
+    operation_id = read_operation_location.split('/')[-1]
+
+    # Call the "GET" API and wait for it to retrieve the results
+    while True:
+        read_result = computervision_client.get_read_result(operation_id)
+        if read_result.status not in ['notStarted', 'running']:
+            break
+        time.sleep(1)
+
+    # Print the detected text, line by line
+    # if read_result.status == OperationStatusCodes.succeeded:
+    #     for text_result in read_result.analyze_result.read_results:
+    #         for line in text_result.lines:
+    #             print(line.text)
+    #             print(line.bounding_box)
+
+    return read_result
+
+
+if args.no_ocr_cache:
+    azure_ocr_single_image = memory.cache(azure_ocr_single_image)
+
+
 def process_file(file_path_inpath):
     file_path, inpath = file_path_inpath
     relative_path = os.path.relpath(file_path, inpath)
@@ -195,10 +275,14 @@ def process_file(file_path_inpath):
     # TODO: delete empty folders at the end
     os.makedirs(out_path, exist_ok=True)
 
+    if file_path.suffix not in args.whitelist:
+        # print(f'Warning: File is not whitelisted. Skipping file. "{file_path}"')
+        return
+
     try:
         # TODO: maybe make stage 1 to be JSONs and then stage 2 is the OCR and the
         if file_path.suffix.lower() == '.pdf':
-            images = pdf2image.convert_from_path(file_path)  # heavy work
+            images: list[Image.Image] = pdf2image.convert_from_path(file_path)  # heavy work
 
             def process_image(i, image, out_path):
                 # print('processing image', i+1, 'of', len(images))
@@ -207,29 +291,62 @@ def process_file(file_path_inpath):
                     print('--no_overwrite, skipping existing file:', image_path)
                     return
 
+                # print('saving to', image_path)
                 image.save(image_path, 'TIFF')
 
-                content = read_file_content(image_path)
-                image_response = google_ocr_single_image(content)
-                try:
-                    annotate_and_save(image_path, image_response, file_content=content)
-                except Exception as e:
-                    print('ERROR: Failed to annotate image', image_path, e)
+                def PIL_to_bytes(image, format='TIFF'):
+                    # a hack
+                    byte_arr = io.BytesIO()
+                    image.save(byte_arr, format=format)
+                    return byte_arr.getvalue()
 
-                # with open(image_path + ".annotation.json", "w") as f:
-                #     json.dump(results, f, indent=4)
-                #     print("wrote to ", image_path + ".annotation.json")
+                content = PIL_to_bytes(image, format='TIFF')
+
+                if args.ocr == 'google':
+                    image_response = google_ocr_single_image(content)
+                    try:
+                        google_ocr_annotate_and_save(image_path, image_response, file_content=content)
+                    except Exception as e:
+                        print('\nERROR: Failed to annotate image', image_path, e)
+                    contents = [
+                        {
+                            'text': image_response.full_text_annotation.text,
+                            'page': i + 1,
+                            'section': None,  # TODO: infer this value
+                            'text_type': None,  # TODO: infer this value
+                            'languages': [x.language_code for x in image_response.full_text_annotation.pages[i].property.detected_languages],
+                        }
+                        for i in range(len(image_response.full_text_annotation.pages))  # don't worry there's only one page
+                    ]
+                else:
+                    read_result = azure_ocr_single_image(content)
+                    try:
+                        azure_ocr_annotate_and_save(image_path, read_result, file_content=content)
+                    except Exception as e:
+                        print('\nERROR: Failed to annotate image', image_path, e)
+                    # TODO: double check this
+                    contents = [
+                        {
+                            'text': line.text,
+                            'page': i + 1,
+                            'section': None,
+                            'text_type': None,
+                            'languages': None,
+                        }
+                        for i, text_result in enumerate(read_result.analyze_result.read_results)
+                        for line in text_result.lines
+                    ]
 
                 with open(image_path + '.organized.json', 'w') as f:
                     organized_object = {
-                        'preprocess_script_git_hash': '1234567890abcdef',  # TODO: replace with actual git hash
+                        'preprocess_script_git_hash': GIT_HASH,
                         'schema_version': '1.0',
                         'source_entity': None,  # TODO: infer this value
                         'origin_url': None,  # TODO: infer this value
                         'serial_number': None,  # TODO: infer this value
                         'original_file_path': str(file_path),
                         'document_type': None,  # TODO: infer this value
-                        'circular_topic': None,  # TODO: infer this value
+                        'circular_topics': None,  # TODO: infer this value
                         'circular_number': None,  # TODO: infer this value
                         'title': None,  # TODO: infer this value
                         'issue_date': None,  # TODO: infer this value
@@ -237,21 +354,7 @@ def process_file(file_path_inpath):
                         'expiration_date': None,  # TODO: infer this value
                         'confidentiality': None,  # TODO: infer this value
                         'languages': None,  # TODO: infer this value
-                        'contents': [
-                            {
-                                'text': image_response.full_text_annotation.text if image_response.full_text_annotation else None,
-                                'page': i + 1,
-                                'section': None,  # TODO: infer this value
-                                'text_type': None,  # TODO: infer this value
-                                'language': image_response.full_text_annotation.pages[i].property.detected_languages[0].language_code
-                                if image_response.full_text_annotation
-                                and image_response.full_text_annotation.pages
-                                and image_response.full_text_annotation.pages[i].property.detected_languages
-                                else None,
-                            }
-                            for i in range(len(image_response.full_text_annotation.pages))
-                            if image_response.full_text_annotation
-                        ],
+                        'contents': contents,
                     }
                     json.dump(organized_object, f, indent=4)
                     print('wrote to ', image_path + '.organized.json')
@@ -269,8 +372,49 @@ def process_file(file_path_inpath):
                 data = f.read()
             # only write if not empty:
             if len(data) > 5:
-                with open(out_path, 'w') as f:
-                    f.write(data)
+                json_object = json.loads(data)
+                if type(json_object) is not dict and not type(json_object[0]) is dict:
+                    print(f'Warning: File is not a valid JSON file. Skipping file. "{file_path}"')
+                    return
+
+                def get_content_from_json(json_object):
+                    if 'full_text' in json_object:
+                        return json_object['full_text']
+                    elif 'text' in json_object:
+                        return json_object['text']
+                    else:
+                        return None
+
+                with open(out_path + '.organized.json', 'w') as f:
+                    organized_object = {
+                        'preprocess_script_git_hash': GIT_HASH,
+                        'schema_version': '1.0',
+                        'source_entity': None,  # TODO: infer this value
+                        'origin_url': None,  # TODO: infer this value
+                        'serial_number': None,  # TODO: infer this value
+                        'original_file_path': str(file_path),
+                        'document_type': None,  # TODO: infer this value
+                        'circular_topics': None,  # TODO: infer this value
+                        'circular_number': None,  # TODO: infer this value
+                        'title': None,  # TODO: infer this value
+                        'issue_date': None,  # TODO: infer this value
+                        'effective_date': None,  # TODO: infer this value
+                        'expiration_date': None,  # TODO: infer this value
+                        'confidentiality': None,  # TODO: infer this value
+                        'languages': None,  # TODO: infer this value
+                        'contents': [
+                            {
+                                'text': None,
+                                'page': i + 1,
+                                'section': None,  # TODO: infer this value
+                                'text_type': None,  # TODO: infer this value
+                                'languages': [],
+                            }
+                            for i in range(len(json_object))  # FIXME: tihs is wrong
+                        ],
+                    }
+                    json.dump(organized_object, f, indent=4)
+
         elif file_path.suffix.lower() in ['.txt']:
             if args.no_overwrite and os.path.exists(out_path):
                 print('--no_overwrite, skipping existing file:', out_path)
@@ -310,7 +454,7 @@ if __name__ == '__main__':
     file_paths = list(Path(args.data_root).rglob('**/*.*'))
 
     def init_main():
-        with multiprocessing.Pool(int(multiprocessing.cpu_count() * 0.8)) as pool:
+        with multiprocessing.Pool(args.processors) as pool:
             with tqdm(total=len(file_paths)) as pbar:
                 for _ in pool.imap_unordered(process_file, zip(file_paths, [args.data_root] * len(file_paths))):
                     pbar.update()

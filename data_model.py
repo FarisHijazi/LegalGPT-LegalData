@@ -10,7 +10,7 @@ data model for the following JSON format:
     "serial_number": "123456",
     "original_file_path": "path/to/file.pdf",
     "document_type": "regulation",      // نوع الوثيقة
-    "circular_topic": "category",       // موضوع التعميم
+    "circular_topics": ["category",],       // موضوع التعميم
     "circular_number": "123",           // رقم التعميم
     "title": "Legal Document Title",
     "issue_date": "2022-11-01",
@@ -20,8 +20,8 @@ data model for the following JSON format:
     "languages": ["ar", "en"],
     "contents": [
         // these are the extracted texts from the PDF
-        {"text": "extracted text", "page": 1, "section": "Introduction", "text_type": "paragraph", "language": "ar"},
-        {"text": "extracted text", "page": 2, "section": "Section 1", "text_type": "bullet_point", "language": "ar"}
+        {"text": "extracted text", "page": 1, "section": "Introduction", "text_type": "paragraph", "languages": ["ar"]},
+        {"text": "extracted text", "page": 2, "section": "Section 1", "text_type": "bullet_point", "languages": ["ar"]}
     ],
 }
 """
