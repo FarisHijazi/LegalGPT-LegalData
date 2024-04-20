@@ -29,12 +29,14 @@ import json
 import mimetypes
 import multiprocessing
 import os
+import re
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
 
+import openai
 import pandas as pd
 import pdf2image
 from google.cloud.vision_v1.types.image_annotator import AnnotateImageResponse
@@ -62,6 +64,11 @@ parser.add_argument(
     default=False,
     action='store_true',
     help="Don't use OCR cache, will run OCR on all images even those it's seen before",
+)
+parser.add_argument(
+    '--skip_hash_check',
+    default=False,
+    action='store_true',
 )
 # add argument list to whitelist specific file extensions
 parser.add_argument(
@@ -108,7 +115,7 @@ def read_file_content(file_path):
 def get_git_hash():
     """get git hash of the current commit for this file convert.py"""
     # check if there are any changes to the current file, if so, raise an exception
-    if subprocess.check_output(['git', 'status', '--porcelain', __file__]):
+    if subprocess.check_output(['git', 'status', '--porcelain', __file__]) and not args.skip_hash_check:
         raise Exception(
             'ERROR: There are uncommitted changes to this file, please commit them before running this script, this is to verify script and data integrity.'
         )
@@ -118,6 +125,138 @@ def get_git_hash():
 # get git hash:
 GIT_HASH = get_git_hash()
 # GIT_HASH = None
+
+
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
+
+def llm_json(prompt: str):
+    completion = openai.ChatCompletion.create(
+        # model="gpt-3.5-turbo",
+        messages=[
+            {
+                'role': 'system',
+                'content': 'Return JSON only, using the following keys: {issue_date, effective_date, expiration_date, circular_number,}',
+            },
+            {'role': 'user', 'content': prompt},
+        ],
+        model='gpt-4-1106-preview',
+        response_format={'type': 'json_object'},
+    )
+    return json.loads(completion.choices[0].message['content'])
+
+
+def split_on_one_or_more_white_characters(string):
+    import re
+
+    return [s.strip() for s in re.split(r'[\n\r]+', string)]
+
+
+def parse_date_and_circular_number(text):
+    # Extract the circular number
+    circular_number = re.search(r'رقم (\d+) ', text)
+    if circular_number:
+        circular_number = circular_number.group(1)
+
+    # Extract the issue date
+    issue_date = re.search(r'(\d+/?\d+/?\d+ه)', text)
+    if issue_date:
+        issue_date = issue_date.group(1)
+    return {'circular_number': circular_number, 'issue_date': issue_date}
+
+
+def process_json(obj, file_path='') -> list[dict]:
+    # Initialize result list
+    results = []
+
+    # Check the type of obj and process accordingly
+    if isinstance(obj, dict):
+
+        # Return a dictionary with pre-defined keys and values
+        result = {
+            'preprocess_script_git_hash': '1234567890abcdef',  # TODO: replace with actual git hash
+            'schema_version': '1.0',
+            'source_entity': None,
+            'origin_url': None,
+            'serial_number': None,
+            'original_file_path': str(file_path),
+            'document_type': None,
+            'circular_topic': None,
+            'circular_number': None,
+            'title': None,
+            'issue_date': None,
+            'effective_date': None,
+            'expiration_date': None,
+            'confidentiality': None,
+            'languages': None,
+            'contents': [
+                {
+                    'text': None,  # TODO: replace with actual text
+                    'page': None,
+                    'section': None,
+                    'text_type': None,
+                    'languages': ['arabic'],
+                }
+            ],
+        }
+
+        # TODO: aggregate multiple strings ( وعنوان الحكم نص التعميم والمختصر والاستئناف ونص احكم ونص التعميم)
+        result['contents'][0]['text'] = ''
+        text_keys = [
+            'text',
+            'عنوان الحكم',
+            'بيانات الحكم',
+            'نص التعميم',
+            'نص الحكم',
+            'الاستئناف',
+        ]
+        for key in text_keys:
+            if key in obj:
+                result['contents'][0]['text'] += '## ' + key + ':\n---\n\n' + obj[key].strip() + '\n\n'
+        result['contents'][0]['text'] = result['contents'][0]['text'].strip()
+
+        if '(. . .' in result['contents'][0]['text']:
+            print('WARNING - text contains incomplete text')
+            result['contents'][0]['text'] = ''
+
+        if 'التصنيف' in obj:
+            result['circular_topics'] = split_on_one_or_more_white_characters(obj['التصنيف'].strip())
+        if 'موضوع التعميم' in obj:
+            result['circular_topics'] = split_on_one_or_more_white_characters(obj['موضوع التعميم'].strip())
+
+        result['circular_number'] = obj.get('رقم التعميم')
+        result['issue_date'] = obj.get('تاريخ التعميم')
+        result['origin_url'] = obj.get('url')
+
+        if 'بيانات الحكم' in obj:
+            o = parse_date_and_circular_number(obj['بيانات الحكم'])
+            result['circular_number'] = o['circular_number']
+            result['issue_date'] = o['issue_date']
+
+        if 'عنوان الحكم' in obj:
+            result['title'] = obj['عنوان الحكم']
+
+        results.append(obj)
+    elif isinstance(obj, list):
+        for j in obj:
+            results.extend(process_json(j, file_path))
+    else:
+        if type(obj) is str and len(obj) > 10:
+            results.append({'text': str(obj)})
+        else:
+            print('skipping file:', file_path)
+    # TODO: deal with strings
+
+    return results
+
+
+# processed = [process_json(j, fpath) for j, fpath in zip(tqdm(jsons, 'processing'), paths)]
+# # flatten
+# import itertools
+# processed = list(itertools.chain(*processed))
+# len(processed)
+
+# =====
 
 
 def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
@@ -376,44 +515,11 @@ def process_file(file_path_inpath):
                 if type(json_object) is not dict and not type(json_object[0]) is dict:
                     print(f'Warning: File is not a valid JSON file. Skipping file. "{file_path}"')
                     return
+                processed_jsons = process_json(json_object, file_path)
 
-                def get_content_from_json(json_object):
-                    if 'full_text' in json_object:
-                        return json_object['full_text']
-                    elif 'text' in json_object:
-                        return json_object['text']
-                    else:
-                        return None
-
-                with open(out_path + '.organized.json', 'w') as f:
-                    organized_object = {
-                        'preprocess_script_git_hash': GIT_HASH,
-                        'schema_version': '1.0',
-                        'source_entity': None,  # TODO: infer this value
-                        'origin_url': None,  # TODO: infer this value
-                        'serial_number': None,  # TODO: infer this value
-                        'original_file_path': str(file_path),
-                        'document_type': None,  # TODO: infer this value
-                        'circular_topics': None,  # TODO: infer this value
-                        'circular_number': None,  # TODO: infer this value
-                        'title': None,  # TODO: infer this value
-                        'issue_date': None,  # TODO: infer this value
-                        'effective_date': None,  # TODO: infer this value
-                        'expiration_date': None,  # TODO: infer this value
-                        'confidentiality': None,  # TODO: infer this value
-                        'languages': None,  # TODO: infer this value
-                        'contents': [
-                            {
-                                'text': None,
-                                'page': i + 1,
-                                'section': None,  # TODO: infer this value
-                                'text_type': None,  # TODO: infer this value
-                                'languages': [],
-                            }
-                            for i in range(len(json_object))  # FIXME: tihs is wrong
-                        ],
-                    }
-                    json.dump(organized_object, f, indent=4)
+                for i, processed_json in enumerate(processed_jsons):
+                    with open(out_path + f'.{i+1}.organized.json', 'w') as f:
+                        json.dump(processed_json, f, indent=4)
 
         elif file_path.suffix.lower() in ['.txt']:
             if args.no_overwrite and os.path.exists(out_path):

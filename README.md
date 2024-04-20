@@ -11,6 +11,10 @@ pip install -r requirements.txt
 
 sudo apt install poppler-utils -y
 
+# setup the .env file
+# MAKE SURE TO OPEN IT AND SET THE API KEYS
+cp .env.example .env
+
 ```
 
 ## Data Collection
@@ -32,7 +36,7 @@ We need to use OCR for extracting the PDFs
 Use the `extract.py` script to extract the text from the PDFs
 
 
-<!-- 
+<!--
 sudo apt install imagemagick -y
 sudo cp /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.backup
 
@@ -44,6 +48,9 @@ srcext=pdf; find data/raw/ -type f -name "*.$srcext" -print0 | xargs -0 -P $(npr
 
 ```bash
 
-python convert.py data/raw --out_dir data/01_converted
-```
+python convert.py data/raw --out_dir data/01_converted --whitelist .pdf --ocr azure --processors 50
+python organize.py data/01_converted --out_dir data/02_organized
 
+#TODO: add organization to the data (unified JSON format)
+#TODO: add step to take this unified JSON and fill the missing fields by reading the content with an LLM
+```

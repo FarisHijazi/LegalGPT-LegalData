@@ -4,6 +4,7 @@ dvc
 # optional
 google-cloud-vision
 joblib
+openai
 pandas
 pdf2image
 pillow
