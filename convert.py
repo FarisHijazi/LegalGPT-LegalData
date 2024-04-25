@@ -3,23 +3,12 @@ Dataset preprocessor
 
 this script processes lots of random unstructured files from a dataset
 
-it does things in stages and saves intermediate results, such that if it is interrupted,
-it can carry off where it left off, this also gives you the ability to inspect intermediate steps and debug
+This script operates differently depending on the file type, but the goal is to output a unified JSON format.
 
-1. convert
-    - split and convert all PDFs into individual images per page in their place
-    - convert all xlsx and xls to CSV in their place
-    - convert text files to simple JSON {text: "file content"}
-2. restructure
-    - load all JSON files and save them as JSON files
-    - load all CSV files and convert them to JSON files
-    - run OCR on all images and save the extracted text as JSON files
-3. clense
-    - load all JSON files and clean them up and make them more meaningful, for example putting prompts
-
-unified structure:
-
-represents a single file
+- .pdf: convert pages to images -> run OCR on each page -> convert to unified JSON
+- .xls, .xlsx, .csv: convert to unified JSON
+- .txt: convert to unified JSON
+- .json: convert to unified JSON
 
 """
 
@@ -118,19 +107,175 @@ def get_git_hash():
     if subprocess.check_output(['git', 'status', '--porcelain', __file__]) and not args.skip_hash_check:
         raise Exception(
             'ERROR: There are uncommitted changes to this file, please commit them before running this script, this is to verify script and data integrity.'
+            '\nIf you are sure you want to run this script with uncommitted changes, use the --skip_hash_check flag.'
         )
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('utf-8')
 
 
 # get git hash:
 GIT_HASH = get_git_hash()
-# GIT_HASH = None
 
 
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# Create a memory object for caching
+memory = Memory('./cachedir', verbose=0)
+
+
+@memory.cache
+def google_ocr_single_image(image: bytes) -> AnnotateImageResponse:
+    """
+    image: could be path or content
+    """
+    if isinstance(image, str):
+        content = read_file_content(image)
+        pimage = Image.open(BytesIO(content))
+        mime_type, _ = mimetypes.guess_type(image)
+    elif isinstance(image, bytes):
+        content = image
+        # guess the mime type
+        pimage = Image.open(BytesIO(content))
+        mime_type = 'image/' + pimage.format.lower()
+    else:
+        raise ValueError('image should be a path or bytes')
+
+    if mime_type is None:
+        raise Exception(f'Failed to guess the mime type of {image}')
+
+    if mime_type != 'image/tiff':
+        print('WARNING: Converting PNG to TIFF')
+        # convert to image/tiff
+        # Open the image file
+
+        # Convert and save the image in TIFF format
+        tiff_image_io = BytesIO()
+        pimage.save(tiff_image_io, format='TIFF')
+        tiff_image_io.seek(0)
+
+        # Update the mime_type and content for the new TIFF image
+        mime_type = 'image/tiff'
+        content = tiff_image_io.read()
+
+    input_configs = [{'mime_type': mime_type, 'content': content}]
+    features = [{'type_': vision_v1.Feature.Type.DOCUMENT_TEXT_DETECTION}]
+
+    # The service can process up to 5 pages per document file. Here we specify
+    # the first, second, and last page of the document to be processed.
+    requests = [{'input_config': input_config, 'features': features, 'pages': []} for input_config in input_configs]
+
+    response = google_vision_client.batch_annotate_files(requests=requests)
+    assert len(response.responses[0].responses) == 1, 'FATAL ERROR: something is wrong with the number of responses'
+    image_response = response.responses[0].responses[0]
+
+    return image_response
+
+
+def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
+    # Get the image
+    image_path = Path(image_path)
+    if file_content is None:
+        image = Image.open(BytesIO(file_content))
+    else:
+        image = Image.open(image_path)
+
+    # Create a draw object
+    draw = ImageDraw.Draw(image)
+
+    # Draw rectangles for each block
+    for page in image_response.full_text_annotation.pages:
+        for block in page.blocks:
+            try:
+                vertices = [(vertex.x, vertex.y) for vertex in block.bounding_box.vertices]
+                draw.rectangle([vertices[0], vertices[2]], outline='red')
+            except Exception as e:
+                print('\nERROR: Failed to draw rectangle for block', e)
+
+    # Create the new file name
+    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
+
+    # Save the image
+    print('saved to ', new_file_name)
+    image.save(new_file_name)
+
+
+if args.no_ocr_cache:
+    google_ocr_single_image = memory.cache(google_ocr_single_image)
+
+
+@memory.cache
+def azure_ocr_single_image(image: bytes):
+    '''
+    OCR: Read File using the Read API, extract text - remote
+    This example will extract text in an image, then print results, line by line.
+    This API call can also extract handwriting style text (not shown).
+    '''
+    read_response = computervision_client.read_in_stream(io.BytesIO(image), raw=True)
+
+    # Get the operation location (URL with an ID at the end) from the response
+    read_operation_location = read_response.headers['Operation-Location']
+    # Grab the ID from the URL
+    operation_id = read_operation_location.split('/')[-1]
+
+    # Call the "GET" API and wait for it to retrieve the results
+    while True:
+        read_result = computervision_client.get_read_result(operation_id)
+        if read_result.status not in ['notStarted', 'running']:
+            break
+        time.sleep(1)
+
+    # Print the detected text, line by line
+    # if read_result.status == OperationStatusCodes.succeeded:
+    #     for text_result in read_result.analyze_result.read_results:
+    #         for line in text_result.lines:
+    #             print(line.text)
+    #             print(line.bounding_box)
+
+    return read_result
+
+
+def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
+    # Get the image
+    image_path = Path(image_path)
+    if file_content is None:
+        image = Image.open(BytesIO(file_content))
+    else:
+        image = Image.open(image_path)
+
+    # Create a draw object
+    draw = ImageDraw.Draw(image)
+
+    # Loop over each line in the result
+    for text_result in read_result.analyze_result.read_results:
+        for line in text_result.lines:
+            # Get the bounding box coordinates
+            bounding_box = line.bounding_box
+
+            # Draw rectangle
+            draw.rectangle([(bounding_box[0], bounding_box[1]), (bounding_box[4], bounding_box[5])], outline='red')
+
+    # Create the new file name
+    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
+
+    # Save the image
+    image.save(new_file_name)
+    print('azure_ocr_annotate_and_save() saved to ', new_file_name)
+
+
+if args.no_ocr_cache:
+    azure_ocr_single_image = memory.cache(azure_ocr_single_image)
+
+
+def PIL_to_bytes(image, format='TIFF'):
+    # a hack
+    byte_arr = io.BytesIO()
+    image.save(byte_arr, format=format)
+    return byte_arr.getvalue()
+
+
+# === end of OCR functions ===
 
 
 def llm_json(prompt: str):
+    openai.api_key = os.getenv('OPENAI_API_KEY')
+
     completion = openai.ChatCompletion.create(
         # model="gpt-3.5-turbo",
         messages=[
@@ -163,6 +308,9 @@ def parse_date_and_circular_number(text):
     if issue_date:
         issue_date = issue_date.group(1)
     return {'circular_number': circular_number, 'issue_date': issue_date}
+
+
+# =====
 
 
 def process_json(obj, file_path='') -> list[dict]:
@@ -250,162 +398,6 @@ def process_json(obj, file_path='') -> list[dict]:
     return results
 
 
-# processed = [process_json(j, fpath) for j, fpath in zip(tqdm(jsons, 'processing'), paths)]
-# # flatten
-# import itertools
-# processed = list(itertools.chain(*processed))
-# len(processed)
-
-# =====
-
-
-def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
-    # Get the image
-    image_path = Path(image_path)
-    if file_content is None:
-        image = Image.open(BytesIO(file_content))
-    else:
-        image = Image.open(image_path)
-
-    # Create a draw object
-    draw = ImageDraw.Draw(image)
-
-    # Draw rectangles for each block
-    for page in image_response.full_text_annotation.pages:
-        for block in page.blocks:
-            try:
-                vertices = [(vertex.x, vertex.y) for vertex in block.bounding_box.vertices]
-                draw.rectangle([vertices[0], vertices[2]], outline='red')
-            except Exception as e:
-                print('\nERROR: Failed to draw rectangle for block', e)
-
-    # Create the new file name
-    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
-
-    # Save the image
-    print('saved to ', new_file_name)
-    image.save(new_file_name)
-
-
-def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
-    # Get the image
-    image_path = Path(image_path)
-    if file_content is None:
-        image = Image.open(BytesIO(file_content))
-    else:
-        image = Image.open(image_path)
-
-    # Create a draw object
-    draw = ImageDraw.Draw(image)
-
-    # Loop over each line in the result
-    for text_result in read_result.analyze_result.read_results:
-        for line in text_result.lines:
-            # Get the bounding box coordinates
-            bounding_box = line.bounding_box
-
-            # Draw rectangle
-            draw.rectangle([(bounding_box[0], bounding_box[1]), (bounding_box[4], bounding_box[5])], outline='red')
-
-    # Create the new file name
-    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
-
-    # Save the image
-    image.save(new_file_name)
-    print('azure_ocr_annotate_and_save() saved to ', new_file_name)
-
-
-# Create a memory object for caching
-memory = Memory('./cachedir', verbose=0)
-
-
-@memory.cache
-def google_ocr_single_image(image: bytes) -> AnnotateImageResponse:
-    """
-    image: could be path or content
-    """
-    if isinstance(image, str):
-        content = read_file_content(image)
-        pimage = Image.open(BytesIO(content))
-        mime_type, _ = mimetypes.guess_type(image)
-    elif isinstance(image, bytes):
-        content = image
-        # guess the mime type
-        pimage = Image.open(BytesIO(content))
-        mime_type = 'image/' + pimage.format.lower()
-    else:
-        raise ValueError('image should be a path or bytes')
-
-    if mime_type is None:
-        raise Exception(f'Failed to guess the mime type of {image}')
-
-    if mime_type != 'image/tiff':
-        print('WARNING: Converting PNG to TIFF')
-        # convert to image/tiff
-        # Open the image file
-
-        # Convert and save the image in TIFF format
-        tiff_image_io = BytesIO()
-        pimage.save(tiff_image_io, format='TIFF')
-        tiff_image_io.seek(0)
-
-        # Update the mime_type and content for the new TIFF image
-        mime_type = 'image/tiff'
-        content = tiff_image_io.read()
-
-    input_configs = [{'mime_type': mime_type, 'content': content}]
-    features = [{'type_': vision_v1.Feature.Type.DOCUMENT_TEXT_DETECTION}]
-
-    # The service can process up to 5 pages per document file. Here we specify
-    # the first, second, and last page of the document to be processed.
-    requests = [{'input_config': input_config, 'features': features, 'pages': []} for input_config in input_configs]
-
-    response = google_vision_client.batch_annotate_files(requests=requests)
-    assert len(response.responses[0].responses) == 1, 'FATAL ERROR: something is wrong with the number of responses'
-    image_response = response.responses[0].responses[0]
-
-    return image_response
-
-
-if args.no_ocr_cache:
-    google_ocr_single_image = memory.cache(google_ocr_single_image)
-
-
-@memory.cache
-def azure_ocr_single_image(image: bytes):
-    '''
-    OCR: Read File using the Read API, extract text - remote
-    This example will extract text in an image, then print results, line by line.
-    This API call can also extract handwriting style text (not shown).
-    '''
-    read_response = computervision_client.read_in_stream(io.BytesIO(image), raw=True)
-
-    # Get the operation location (URL with an ID at the end) from the response
-    read_operation_location = read_response.headers['Operation-Location']
-    # Grab the ID from the URL
-    operation_id = read_operation_location.split('/')[-1]
-
-    # Call the "GET" API and wait for it to retrieve the results
-    while True:
-        read_result = computervision_client.get_read_result(operation_id)
-        if read_result.status not in ['notStarted', 'running']:
-            break
-        time.sleep(1)
-
-    # Print the detected text, line by line
-    # if read_result.status == OperationStatusCodes.succeeded:
-    #     for text_result in read_result.analyze_result.read_results:
-    #         for line in text_result.lines:
-    #             print(line.text)
-    #             print(line.bounding_box)
-
-    return read_result
-
-
-if args.no_ocr_cache:
-    azure_ocr_single_image = memory.cache(azure_ocr_single_image)
-
-
 def process_file(file_path_inpath):
     file_path, inpath = file_path_inpath
     relative_path = os.path.relpath(file_path, inpath)
@@ -432,12 +424,6 @@ def process_file(file_path_inpath):
 
                 # print('saving to', image_path)
                 image.save(image_path, 'TIFF')
-
-                def PIL_to_bytes(image, format='TIFF'):
-                    # a hack
-                    byte_arr = io.BytesIO()
-                    image.save(byte_arr, format=format)
-                    return byte_arr.getvalue()
 
                 content = PIL_to_bytes(image, format='TIFF')
 
@@ -531,6 +517,36 @@ def process_file(file_path_inpath):
             if len(text) > 5:
                 with open(out_path, 'w') as f:
                     f.write(text)
+
+                with open(out_path + '.organized.json', 'w') as f:
+                    organized_object = {
+                        'preprocess_script_git_hash': GIT_HASH,
+                        'schema_version': '1.0',
+                        'source_entity': None,  # TODO: infer this value
+                        'origin_url': None,  # TODO: infer this value
+                        'serial_number': None,  # TODO: infer this value
+                        'original_file_path': str(file_path),
+                        'document_type': None,  # TODO: infer this value
+                        'circular_topics': None,  # TODO: infer this value
+                        'circular_number': None,  # TODO: infer this value
+                        'title': None,  # TODO: infer this value
+                        'issue_date': None,  # TODO: infer this value
+                        'effective_date': None,  # TODO: infer this value
+                        'expiration_date': None,  # TODO: infer this value
+                        'confidentiality': None,  # TODO: infer this value
+                        'languages': None,  # TODO: infer this value
+                        'contents': [
+                            {
+                                'text': text,
+                                'page': 1,
+                                'section': None,
+                                'text_type': None,
+                                'languages': None,
+                            }
+                        ],
+                    }
+                    json.dump(organized_object, f, indent=4)
+
         elif file_path.suffix.lower() in ['.xls', '.xlsx', '.csv']:
             # write as csv
             try:
