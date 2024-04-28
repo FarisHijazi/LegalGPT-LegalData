@@ -26,7 +26,6 @@ from io import BytesIO
 from pathlib import Path
 
 import openai
-import pandas as pd
 import pdf2image
 from google.cloud.vision_v1.types.image_annotator import AnnotateImageResponse
 from joblib import Memory
@@ -55,7 +54,7 @@ parser.add_argument(
     help="Don't use OCR cache, will run OCR on all images even those it's seen before",
 )
 parser.add_argument(
-    '--skip_hash_check',
+    '--danger_skip_hash_check',
     default=False,
     action='store_true',
 )
@@ -83,6 +82,10 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+BLACKLIST_GLOB = [
+    '**/المنصة القضائية العلمية/**',
+]
+
 
 if args.ocr == 'google':
     from google.cloud import vision_v1
@@ -90,7 +93,8 @@ if args.ocr == 'google':
     # Supported mime_type: application/pdf, image/tiff, image/gif
     google_vision_client = vision_v1.ImageAnnotatorClient()
 else:
-    from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+    from azure.cognitiveservices.vision.computervision import \
+        ComputerVisionClient
     from msrest.authentication import CognitiveServicesCredentials
 
     computervision_client = ComputerVisionClient(os.environ['VISION_ENDPOINT'], CognitiveServicesCredentials(os.environ['VISION_KEY']))
@@ -104,10 +108,10 @@ def read_file_content(file_path):
 def get_git_hash():
     """get git hash of the current commit for this file convert.py"""
     # check if there are any changes to the current file, if so, raise an exception
-    if subprocess.check_output(['git', 'status', '--porcelain', __file__]) and not args.skip_hash_check:
+    if subprocess.check_output(['git', 'status', '--porcelain', __file__]) and not args.danger_skip_hash_check:
         raise Exception(
             'ERROR: There are uncommitted changes to this file, please commit them before running this script, this is to verify script and data integrity.'
-            '\nIf you are sure you want to run this script with uncommitted changes, use the --skip_hash_check flag.'
+            '\nIf you are sure you want to run this script with uncommitted changes, use the --danger_skip_hash_check flag.'
         )
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('utf-8')
 
@@ -322,7 +326,7 @@ def process_json(obj, file_path='') -> list[dict]:
 
         # Return a dictionary with pre-defined keys and values
         result = {
-            'preprocess_script_git_hash': '1234567890abcdef',  # TODO: replace with actual git hash
+            'preprocess_script_git_hash': GIT_HASH,
             'schema_version': '1.0',
             'source_entity': None,
             'origin_url': None,
@@ -384,7 +388,7 @@ def process_json(obj, file_path='') -> list[dict]:
         if 'عنوان الحكم' in obj:
             result['title'] = obj['عنوان الحكم']
 
-        results.append(obj)
+        results.append(result)
     elif isinstance(obj, list):
         for j in obj:
             results.extend(process_json(j, file_path))
@@ -403,12 +407,16 @@ def process_file(file_path_inpath):
     relative_path = os.path.relpath(file_path, inpath)
     out_path = os.path.join(args.out_dir, relative_path)
 
-    # TODO: delete empty folders at the end
-    os.makedirs(out_path, exist_ok=True)
-
     if file_path.suffix not in args.whitelist:
         # print(f'Warning: File is not whitelisted. Skipping file. "{file_path}"')
         return
+
+    if any([Path(str(file_path)).match(blacklisted_glob) for blacklisted_glob in BLACKLIST_GLOB]):
+        print(f'Warning: File is blacklisted. Skipping file. "{file_path}"')
+        return
+
+    # TODO: delete empty folders at the end
+    os.makedirs(out_path, exist_ok=True)
 
     try:
         # TODO: maybe make stage 1 to be JSONs and then stage 2 is the OCR and the
@@ -481,7 +489,7 @@ def process_file(file_path_inpath):
                         'languages': None,  # TODO: infer this value
                         'contents': contents,
                     }
-                    json.dump(organized_object, f, indent=4)
+                    json.dump(organized_object, f, indent=4, ensure_ascii=False)
                     print('wrote to ', image_path + '.organized.json')
 
             # # Create a ThreadPoolExecutor
@@ -504,8 +512,9 @@ def process_file(file_path_inpath):
                 processed_jsons = process_json(json_object, file_path)
 
                 for i, processed_json in enumerate(processed_jsons):
-                    with open(out_path + f'.{i+1}.organized.json', 'w') as f:
-                        json.dump(processed_json, f, indent=4)
+                    file_out_path = os.path.join(out_path, f'{str(i+1).zfill(3)}.organized.json')
+                    with open(file_out_path, 'w') as f:
+                        json.dump(processed_json, f, indent=4, ensure_ascii=False)
 
         elif file_path.suffix.lower() in ['.txt']:
             if args.no_overwrite and os.path.exists(out_path):
@@ -515,54 +524,10 @@ def process_file(file_path_inpath):
                 text = f.read()
             # only write if not empty:
             if len(text) > 5:
-                with open(out_path, 'w') as f:
-                    f.write(text)
-
-                with open(out_path + '.organized.json', 'w') as f:
-                    organized_object = {
-                        'preprocess_script_git_hash': GIT_HASH,
-                        'schema_version': '1.0',
-                        'source_entity': None,  # TODO: infer this value
-                        'origin_url': None,  # TODO: infer this value
-                        'serial_number': None,  # TODO: infer this value
-                        'original_file_path': str(file_path),
-                        'document_type': None,  # TODO: infer this value
-                        'circular_topics': None,  # TODO: infer this value
-                        'circular_number': None,  # TODO: infer this value
-                        'title': None,  # TODO: infer this value
-                        'issue_date': None,  # TODO: infer this value
-                        'effective_date': None,  # TODO: infer this value
-                        'expiration_date': None,  # TODO: infer this value
-                        'confidentiality': None,  # TODO: infer this value
-                        'languages': None,  # TODO: infer this value
-                        'contents': [
-                            {
-                                'text': text,
-                                'page': 1,
-                                'section': None,
-                                'text_type': None,
-                                'languages': None,
-                            }
-                        ],
-                    }
-                    json.dump(organized_object, f, indent=4)
-
-        elif file_path.suffix.lower() in ['.xls', '.xlsx', '.csv']:
-            # write as csv
-            try:
-                if args.no_overwrite and os.path.exists(out_path):
-                    print('--no_overwrite, skipping existing file:', out_path)
-                    return
-                df = pd.read_csv(file_path)
-                df.to_csv(out_path, index=False)
-            except Exception:
-                # sadly some CSV files are actually named as XLSX files
-                if args.no_overwrite and os.path.exists(out_path):
-                    print('--no_overwrite, skipping existing file:', out_path)
-                    return
-                df = pd.read_excel(file_path)
-                out_path = out_path.replace(Path(out_path).suffix, '.csv')
-                df.to_csv(out_path, index=False)
+                processed_json = process_json({'text': text}, file_path)[0]
+                file_out_path = os.path.join(out_path, f'{os.path.basename(file_path)}.organized.json')
+                with open(file_out_path, 'w') as f:
+                    json.dump(processed_json, f, indent=4, ensure_ascii=False)
         else:
             # If the file type is not supported, print a warning message
             print(f'Warning: File type of {file_path.suffix} is not supported. Skipping file {file_path}.')
