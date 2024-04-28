@@ -101,7 +101,7 @@ else:
 
 
 def read_file_content(file_path):
-    with open(file_path, 'rb') as f:
+    with open(file_path, 'rb', encoding='utf8') as f:
         return f.read()
 
 
@@ -471,7 +471,7 @@ def process_file(file_path_inpath):
                         for line in text_result.lines
                     ]
 
-                with open(image_path + '.organized.json', 'w') as f:
+                with open(image_path + '.organized.json', 'w', encoding='utf8') as f:
                     organized_object = {
                         'preprocess_script_git_hash': GIT_HASH,
                         'untrustworthy_git_hash': args.danger_skip_hash_check,
@@ -503,7 +503,7 @@ def process_file(file_path_inpath):
             if args.no_overwrite and os.path.exists(out_path):
                 print('--no_overwrite, skipping existing file:', out_path)
                 return
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf8') as f:
                 data = f.read()
             # only write if not empty:
             if len(data) > 5:
@@ -515,20 +515,20 @@ def process_file(file_path_inpath):
 
                 for i, processed_json in enumerate(processed_jsons):
                     file_out_path = os.path.join(out_path, f'{str(i+1).zfill(3)}.organized.json')
-                    with open(file_out_path, 'w') as f:
+                    with open(file_out_path, 'w', encoding='utf8') as f:
                         json.dump(processed_json, f, indent=4, ensure_ascii=False)
 
         elif file_path.suffix.lower() in ['.txt']:
             if args.no_overwrite and os.path.exists(out_path):
                 print('--no_overwrite, skipping existing file:', out_path)
                 return
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf8') as f:
                 text = f.read()
             # only write if not empty:
             if len(text) > 5:
                 processed_json = process_json({'text': text}, file_path)[0]
                 file_out_path = os.path.join(out_path, f'{os.path.basename(file_path)}.organized.json')
-                with open(file_out_path, 'w') as f:
+                with open(file_out_path, 'w', encoding='utf8') as f:
                     json.dump(processed_json, f, indent=4, ensure_ascii=False)
         else:
             # If the file type is not supported, print a warning message
