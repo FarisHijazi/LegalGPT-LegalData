@@ -412,7 +412,7 @@ def process_file(file_path_inpath):
         # print(f'Warning: File is not whitelisted. Skipping file. "{file_path}"')
         return
 
-    if any([fnmatch.filter([file_path], pattern) for pattern in BLACKLIST_GLOB]):
+    if any([fnmatch.filter([str(file_path)], pattern) for pattern in BLACKLIST_GLOB]):
         print(f'Warning: File is blacklisted. Skipping file. "{file_path}"')
         return
 
