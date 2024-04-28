@@ -6,13 +6,13 @@ this script processes lots of random unstructured files from a dataset
 This script operates differently depending on the file type, but the goal is to output a unified JSON format.
 
 - .pdf: convert pages to images -> run OCR on each page -> convert to unified JSON
-- .xls, .xlsx, .csv: convert to unified JSON
 - .txt: convert to unified JSON
 - .json: convert to unified JSON
 
 """
 
 import argparse
+import fnmatch
 import io
 import json
 import mimetypes
@@ -327,6 +327,7 @@ def process_json(obj, file_path='') -> list[dict]:
         # Return a dictionary with pre-defined keys and values
         result = {
             'preprocess_script_git_hash': GIT_HASH,
+            'untrustworthy_git_hash': args.danger_skip_hash_check,
             'schema_version': '1.0',
             'source_entity': None,
             'origin_url': None,
@@ -411,7 +412,7 @@ def process_file(file_path_inpath):
         # print(f'Warning: File is not whitelisted. Skipping file. "{file_path}"')
         return
 
-    if any([Path(str(file_path)).match(blacklisted_glob) for blacklisted_glob in BLACKLIST_GLOB]):
+    if any([fnmatch.filter([file_path], pattern) for pattern in BLACKLIST_GLOB]):
         print(f'Warning: File is blacklisted. Skipping file. "{file_path}"')
         return
 
@@ -473,6 +474,7 @@ def process_file(file_path_inpath):
                 with open(image_path + '.organized.json', 'w') as f:
                     organized_object = {
                         'preprocess_script_git_hash': GIT_HASH,
+                        'untrustworthy_git_hash': args.danger_skip_hash_check,
                         'schema_version': '1.0',
                         'source_entity': None,  # TODO: infer this value
                         'origin_url': None,  # TODO: infer this value
