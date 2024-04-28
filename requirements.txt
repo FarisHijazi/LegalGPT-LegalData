@@ -1,6 +1,8 @@
 azure-ai-vision-imageanalysis
 azure-cognitiveservices-vision-computervision==0.9.0
 dvc
+dvc-s3
+dvc-azure
 # optional
 google-cloud-vision
 joblib
