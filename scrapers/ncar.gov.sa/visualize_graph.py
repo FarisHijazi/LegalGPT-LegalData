@@ -129,12 +129,12 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Visualize ncar.gov.sa')
-    parser.add_argument('--pages_data', default='pages_data_populated.json', help='Path to pages_data_populated.json')
+    parser.add_argument('--pages_data_populated', default='pages_data_populated.json', help='Path to pages_data_populated.json')
     # create --limit argument to make it less time consuming
     parser.add_argument('--limit', type=int, default=None, help='Limit the number of pages to visualize')
     args = parser.parse_args()
 
-    with open(args.pages_data, 'r', encoding='utf8') as f:
+    with open(args.pages_data_populated, 'r', encoding='utf8') as f:
         pages_data = json.load(f)
 
     G = create_graph(pages_data)
