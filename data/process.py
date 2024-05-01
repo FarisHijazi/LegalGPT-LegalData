@@ -393,8 +393,9 @@ def process_json(obj, file_path='') -> list[dict]:
         for j in obj:
             results.extend(process_json(j, file_path))
     else:
-        if type(obj) is str and len(obj) > 10:
-            results.append({'text': str(obj)})
+        if type(obj) is str and len(obj) > 50:
+            print("WARNING: string passed instead of json object, converting...", str(obj))
+            results.append(process_json({'text': str(obj)}))
         else:
             print('skipping file:', file_path)
     # TODO: deal with strings
@@ -524,11 +525,14 @@ def process_file(file_path_inpath):
             with open(file_path, 'r', encoding='utf8') as f:
                 text = f.read()
             # only write if not empty:
-            if len(text) > 5:
-                processed_json = process_json({'text': text}, file_path)[0]
-                file_out_path = os.path.join(out_path, f'{os.path.basename(file_path)}.organized.json')
-                with open(file_out_path, 'w', encoding='utf8') as f:
-                    json.dump(processed_json, f, indent=4, ensure_ascii=False)
+            if len(text) < 50:
+                print(f'Warning: File is empty. Skipping file. "{file_path}"')
+                return
+
+            processed_json = process_json({'text': text}, file_path)[0]
+            file_out_path = os.path.join(out_path, f'{os.path.basename(file_path)}.organized.json')
+            with open(file_out_path, 'w', encoding='utf8') as f:
+                json.dump(processed_json, f, indent=4, ensure_ascii=False)
         else:
             # If the file type is not supported, print a warning message
             print(f'Warning: File type of {file_path.suffix} is not supported. Skipping file {file_path}.')
