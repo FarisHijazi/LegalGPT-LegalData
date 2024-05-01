@@ -1,6 +1,5 @@
 outs:
-- md5: af1500f22a4666ad21725071ed5fdec4.dir
-  size: 3577360222
-  nfiles: 3990
+- md5: 5e200a50c7454b7796dd94fc69abad94.dir
+  nfiles: 10186
   hash: md5
   path: Legal Data
