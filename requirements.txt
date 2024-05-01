@@ -1,8 +1,8 @@
 azure-ai-vision-imageanalysis
 azure-cognitiveservices-vision-computervision==0.9.0
 dvc
-dvc-s3
 dvc-azure
+dvc-s3
 # optional
 google-cloud-vision
 joblib
@@ -10,6 +10,7 @@ openai
 pandas
 pdf2image
 pillow
+pre-commit
 pydantic
 pytest
 tqdm

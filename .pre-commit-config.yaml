@@ -24,7 +24,7 @@ repos:
       - id: check-executables-have-shebangs # check that executables have shebangs
       - id: sort-simple-yaml # sort yaml files
       - id: requirements-txt-fixer # sort requirements.txt files
-      - id: pretty-format-json # pretty format json files
+      # - id: pretty-format-json # pretty format json files
       - id: double-quote-string-fixer # convert single quotes to double quotes deal with strings in python files
 
   - repo: https://github.com/PyCQA/autoflake

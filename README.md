@@ -5,7 +5,7 @@ This is a repo for collection and curation of the Arabic Saudi Legal Dataset as 
 ## Download and setup
 
 ```bash
-git clone https://github.com/a-fhijazi_thq/LegalData.git
+git clone https://github.com/FarisHijazi/LegalData.git
 cd LegalData
 pip install -r requirements.txt
 
@@ -98,7 +98,6 @@ this script processes lots of random unstructured files from a dataset
 This script operates differently depending on the file type, but the goal is to output a unified JSON format.
 
 - `.pdf`: convert pages to images -> run OCR on each page -> convert `regulation_schema`
-- `.xls, .xlsx, .csv`: convert `regulation_schema`
 - `.txt`: convert `regulation_schema`
 - `.json`: convert `regulation_schema`
 

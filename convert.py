@@ -93,8 +93,7 @@ if args.ocr == 'google':
     # Supported mime_type: application/pdf, image/tiff, image/gif
     google_vision_client = vision_v1.ImageAnnotatorClient()
 else:
-    from azure.cognitiveservices.vision.computervision import \
-        ComputerVisionClient
+    from azure.cognitiveservices.vision.computervision import ComputerVisionClient
     from msrest.authentication import CognitiveServicesCredentials
 
     computervision_client = ComputerVisionClient(os.environ['VISION_ENDPOINT'], CognitiveServicesCredentials(os.environ['VISION_KEY']))
@@ -368,7 +367,7 @@ def process_json(obj, file_path='') -> list[dict]:
                 result['contents'][0]['text'] += '## ' + key + ':\n---\n\n' + obj[key].strip() + '\n\n'
         result['contents'][0]['text'] = result['contents'][0]['text'].strip()
 
-        if '(. . .' in result['contents'][0]['text']:
+        if '(. . .' in result['contents'][0]['text'] or '(...' in result['contents'][0]['text']:
             print('WARNING - text contains incomplete text')
             result['contents'][0]['text'] = ''
 
