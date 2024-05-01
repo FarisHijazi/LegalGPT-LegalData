@@ -24,5 +24,5 @@ with open('najiz_categories.json', 'w') as f:
 
 for item in data:
     item['category'] = [id2label[x] for x in item['categoryId']]
-with open('najiz_faq.json', 'w') as f:
-    json.dump(data, f, indent=4)
+with open('najiz_faq.json', 'w', encoding='utf8') as f:
+    json.dump(data, f, indent=4, ensure_ascii=False)

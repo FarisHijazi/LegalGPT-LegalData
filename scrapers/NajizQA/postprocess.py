@@ -23,5 +23,5 @@ benchmark = [
     for x in najizQA
 ]
 
-with open('benchmark.json', 'w') as f:
-    json.dump(benchmark, f, indent=4)
+with open('benchmark.json', encoding='utf8') as f:
+    json.dump(benchmark, f, indent=4, ensure_ascii=False)
