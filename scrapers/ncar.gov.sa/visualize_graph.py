@@ -1,6 +1,7 @@
 import networkx as nx
 from pyvis.network import Network
 from tqdm.auto import tqdm
+import json
 
 from scrape import get_id
 
@@ -19,7 +20,7 @@ def create_graph(pages_data):
     failures = []
     duplicates_avoided = []
     # Iterate through each page data to add nodes and edges
-    for page in tqdm(pages_data['data'], 'Creating Graph'):
+    for page in tqdm(pages_data['data'][: args.limit], 'Creating Graph'):
         # Add the main document as a node
         try:
             label = page['documentCategory'][0]['name_ar']
@@ -129,9 +130,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Visualize ncar.gov.sa')
     parser.add_argument('--pages_data', default='pages_data_populated.json', help='Path to pages_data_populated.json')
+    # create --limit argument to make it less time consuming
+    parser.add_argument('--limit', type=int, default=None, help='Limit the number of pages to visualize')
     args = parser.parse_args()
 
-    G = create_graph(args.pages_data)
+    with open(args.pages_data, 'r', encoding='utf8') as f:
+        pages_data = json.load(f)
+
+    G = create_graph(pages_data)
     # visualize_graph(G)
     print('visualizing graph...')
     visualize_graph(G)

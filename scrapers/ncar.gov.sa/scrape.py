@@ -161,7 +161,7 @@ if __name__ == '__main__':
     else:
         print('populating pages data ...')
 
-        with ThreadPool(10) as pool:
+        with ThreadPool(5) as pool:
             _ = list(tqdm(pool.imap(populate_page_data, pages_data['data']), 'populating pages data', len(pages_data['data'])))
 
         failures = []
