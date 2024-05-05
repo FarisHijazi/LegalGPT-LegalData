@@ -58,6 +58,8 @@ parser.add_argument(
     default=False,
     action='store_true',
 )
+parser.add_argument('--pdf_save_intermediate', default=False, action='store_true', help='Save individual PDF images')
+parser.add_argument('--ocr_save_annotated_images', default=False, action='store_true', help='Save OCR image annotations')
 # add argument list to whitelist specific file extensions
 parser.add_argument(
     '--ocr',
@@ -123,7 +125,6 @@ GIT_HASH = get_git_hash()
 memory = Memory('./cachedir', verbose=0)
 
 
-@memory.cache
 def google_ocr_single_image(image: bytes) -> AnnotateImageResponse:
     """
     image: could be path or content
@@ -179,6 +180,9 @@ def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
     else:
         image = Image.open(image_path)
 
+    if not args.ocr_save_annotated_images:
+        return
+
     # Create a draw object
     draw = ImageDraw.Draw(image)
 
@@ -199,17 +203,17 @@ def google_ocr_annotate_and_save(image_path, image_response, file_content=None):
     image.save(new_file_name)
 
 
-if args.no_ocr_cache:
+if not args.no_ocr_cache:
     google_ocr_single_image = memory.cache(google_ocr_single_image)
 
 
-@memory.cache
 def azure_ocr_single_image(image: bytes):
     '''
     OCR: Read File using the Read API, extract text - remote
     This example will extract text in an image, then print results, line by line.
     This API call can also extract handwriting style text (not shown).
     '''
+
     read_response = computervision_client.read_in_stream(io.BytesIO(image), raw=True)
 
     # Get the operation location (URL with an ID at the end) from the response
@@ -237,6 +241,13 @@ def azure_ocr_single_image(image: bytes):
 def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
     # Get the image
     image_path = Path(image_path)
+
+    # Create the new file name
+    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
+
+    if not args.ocr_save_annotated_images:
+        return
+
     if file_content is None:
         image = Image.open(BytesIO(file_content))
     else:
@@ -246,23 +257,20 @@ def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
     draw = ImageDraw.Draw(image)
 
     # Loop over each line in the result
-    for text_result in read_result.analyze_result.read_results:
-        for line in text_result.lines:
+    for text_result in read_result['analyze_result']['read_results']:
+        for line in text_result['lines']:
             # Get the bounding box coordinates
-            bounding_box = line.bounding_box
+            bounding_box = line['bounding_box']
 
             # Draw rectangle
             draw.rectangle([(bounding_box[0], bounding_box[1]), (bounding_box[4], bounding_box[5])], outline='red')
-
-    # Create the new file name
-    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
 
     # Save the image
     image.save(new_file_name)
     print('azure_ocr_annotate_and_save() saved to ', new_file_name)
 
 
-if args.no_ocr_cache:
+if not args.no_ocr_cache:
     azure_ocr_single_image = memory.cache(azure_ocr_single_image)
 
 
@@ -394,7 +402,7 @@ def process_json(obj, file_path='') -> list[dict]:
             results.extend(process_json(j, file_path))
     else:
         if type(obj) is str and len(obj) > 50:
-            print("WARNING: string passed instead of json object, converting...", str(obj))
+            print('WARNING: string passed instead of json object, converting...', str(obj))
             results.append(process_json({'text': str(obj)}))
         else:
             print('skipping file:', file_path)
@@ -408,10 +416,6 @@ def process_file(file_path_inpath):
     relative_path = os.path.relpath(file_path, inpath)
     out_path = os.path.join(args.out_dir, relative_path)
 
-    if file_path.suffix not in args.whitelist:
-        # print(f'Warning: File is not whitelisted. Skipping file. "{file_path}"')
-        return
-
     if any([fnmatch.filter([str(file_path)], pattern) for pattern in BLACKLIST_GLOB]):
         print(f'Warning: File is blacklisted. Skipping file. "{file_path}"')
         return
@@ -422,7 +426,12 @@ def process_file(file_path_inpath):
     try:
         # TODO: maybe make stage 1 to be JSONs and then stage 2 is the OCR and the
         if file_path.suffix.lower() == '.pdf':
-            images: list[Image.Image] = pdf2image.convert_from_path(file_path)  # heavy work
+            try:
+                images: list[Image.Image] = pdf2image.convert_from_path(file_path)  # heavy work
+            except pdf2image.exceptions.PDFPageCountError:
+                print('ERROR: corrupted PDF, DELETING:', file_path)
+                os.remove(file_path)
+                return
 
             def process_image(i, image, out_path):
                 # print('processing image', i+1, 'of', len(images))
@@ -432,7 +441,8 @@ def process_file(file_path_inpath):
                     return
 
                 # print('saving to', image_path)
-                image.save(image_path, 'TIFF')
+                if args.pdf_save_intermediate:
+                    image.save(image_path, 'TIFF')
 
                 content = PIL_to_bytes(image, format='TIFF')
 
@@ -453,7 +463,17 @@ def process_file(file_path_inpath):
                         for i in range(len(image_response.full_text_annotation.pages))  # don't worry there's only one page
                     ]
                 else:
-                    read_result = azure_ocr_single_image(content)
+                    azure_ocr_annotation_outpath = image_path + '.azure_ocr_annotation.json'
+                    if os.path.isfile(azure_ocr_annotation_outpath):
+                        with open(azure_ocr_annotation_outpath, 'r', encoding='utf8') as f:
+                            read_result = json.load(f)
+                            # print("using existing azure ocr result", azure_ocr_annotation_outpath)
+                    else:
+                        print('azure ocr annotation not found, running new OCR', azure_ocr_annotation_outpath)
+                        read_result = azure_ocr_single_image(content).as_dict()
+                        with open(azure_ocr_annotation_outpath, 'w', encoding='utf8') as f:
+                            json.dump(read_result, f, ensure_ascii=False, indent=4)
+
                     try:
                         azure_ocr_annotate_and_save(image_path, read_result, file_content=content)
                     except Exception as e:
@@ -467,8 +487,8 @@ def process_file(file_path_inpath):
                             'text_type': None,
                             'languages': None,
                         }
-                        for i, text_result in enumerate(read_result.analyze_result.read_results)
-                        for line in text_result.lines
+                        for i, text_result in enumerate(read_result['analyze_result']['read_results'])
+                        for line in text_result['lines']
                     ]
 
                 with open(image_path + '.organized.json', 'w', encoding='utf8') as f:
@@ -544,6 +564,8 @@ def process_file(file_path_inpath):
 
 if __name__ == '__main__':
     file_paths = list(Path(args.data_root).rglob('**/*.*'))
+    # reduce to whitelisted
+    file_paths = [x for x in file_paths if x.suffix in args.whitelist]
 
     def init_main():
         with multiprocessing.Pool(args.processors) as pool:
