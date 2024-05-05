@@ -6,6 +6,7 @@ import json
 import os
 import time
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 
 import requests
 from tqdm.auto import tqdm
@@ -100,6 +101,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--use_cached', action='store_true', help='Will use locally existing pages_data.json and pages_data_populated.json if they already exist'
     )
+    parser.add_argument('--output_dir', type=Path, default='.', help='Output directory to save the scraped data, default is the current directory')
     args = parser.parse_args()
 
     print('fetching all_release_orgnizations ...')
@@ -112,24 +114,22 @@ if __name__ == '__main__':
         cookies=cookies,
     )
     all_release_orgnizations = response.json()
-
-    with open('all_release_orgnizations.json', 'w', encoding='utf8') as f:
+    with open(args.output_dir / 'all_release_orgnizations.json', 'w', encoding='utf8') as f:
         json.dump(all_release_orgnizations, f, ensure_ascii=False, indent=4)
 
     print('saved all_release_orgnizations.json', len(all_release_orgnizations['data']))
 
     # %%
 
-    if not os.path.exists('ar_i18n.json') and not args.use_cached:
+    if not os.path.exists(args.output_dir / 'ar_i18n.json') and not args.use_cached:
         response = requests.get('https://ncar.gov.sa/assets/i18n/ar.json', headers=headers)
-        with open('ar_i18n.json', 'w') as f:
+        with open(args.output_dir / 'ar_i18n.json', 'w') as f:
             f.write(response.text)
         print('saved ar_i18n.json')
 
-    if os.path.exists('pages_data.json') and args.use_cached:
-        print('loading existing pages_data.json ...')
-        print('PLEASE delete it if you want to scrape new fresh data')
-        with open('pages_data.json', 'r', encoding='utf8') as f:
+    if os.path.exists(args.output_dir / 'pages_data.json') and args.use_cached:
+        print('--use_cached: loading existing pages_data.json ...')
+        with open(args.output_dir / 'pages_data.json', 'r', encoding='utf8') as f:
             pages_data = json.load(f)
     else:
         print('fetching data ...')
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         pages_data = response.json()
         print('pulled data:', len(pages_data['data']))
 
-        with open('pages_data.json', 'w', encoding='utf8') as f:
+        with open(args.output_dir / 'pages_data.json', 'w', encoding='utf8') as f:
             json.dump(pages_data, f, ensure_ascii=False)
         print('saved pages_data.json', len(pages_data['data']), 'entries')
 
@@ -154,10 +154,10 @@ if __name__ == '__main__':
     global_new_id2pagedata = {}
     # global_stupid_id2new_id = {}
 
-    if os.path.exists('pages_data_populated.json') and args.use_cached:
-        with open('pages_data_populated.json', 'r', encoding='utf8') as f:
+    if os.path.exists(args.output_dir / 'pages_data_populated.json') and args.use_cached:
+        with open(args.output_dir / 'pages_data_populated.json', 'r', encoding='utf8') as f:
             pages_data = json.load(f)
-            print('LOADED OLD POPULATED DATA, PLEASE DELETE IF YOU WANT TO RE-SCRAPE')
+            print('--use_cached: loaded old populated data')
     else:
         print('populating pages data ...')
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     pages_data['meta'] = {
         'scrape_date': datetime.datetime.now().isoformat(),
     }
-    with open('pages_data_populated.json', 'w', encoding='utf8') as f:
+    with open(args.output_dir / 'pages_data_populated.json', 'w', encoding='utf8') as f:
         json.dump(pages_data, f, ensure_ascii=False, indent=4)
 
     id2pdfUrl = {x['new_id']: x['pdfUrl'] for x in pages_data['data']}
