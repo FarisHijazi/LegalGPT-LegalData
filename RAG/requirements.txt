@@ -1,9 +1,19 @@
-chromadb
 cohere
-datasets
+jupyter
 llama-index
+llama-index-embeddings-azure-openai
+llama-index-embeddings-text-embeddings-inference
+llama-index-llms-anthropic
+llama-index-llms-azure-openai
+# llama-index-llms-mistralai
 llama-index-postprocessor-cohere-rerank
 llama-index-vector-stores-chroma
+
+# eda
+openpyxl
 pandas
+pyparsing
 python-dotenv
+seaborn
+statsmodels
 tonic_validate
