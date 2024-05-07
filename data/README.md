@@ -107,4 +107,8 @@ This script operates differently depending on the file type, but the goal is to 
 python process.py raw --out_dir processed --whitelist .pdf --ocr azure --processors 50
 
 #TODO: add step to take this unified JSON and fill the missing fields by reading the content with an LLM
+
+# you can process only specific files by choosing the input and --out_dir
+python process.py "./raw/Legal Data/المركز الوطني للوثائق والمحفوظات/rules-regulations/pdfs" --out_dir "/home/fhijazi/Projects/LegalGPT/LegalData/data/processed/Legal Data/المركز الوطني للوثائق والمحفوظات/rules-regulations/pdfs" --whitelist .pdf --ocr azure --processors 50
+
 ```

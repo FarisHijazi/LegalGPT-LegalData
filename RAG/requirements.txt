@@ -1,5 +1,10 @@
+chromadb
 cohere
+datasets
+easydict
 jupyter
+jupyter
+llama-index
 llama-index
 llama-index-embeddings-azure-openai
 llama-index-embeddings-text-embeddings-inference
@@ -17,3 +22,5 @@ python-dotenv
 seaborn
 statsmodels
 tonic_validate
+tonic_validate
+yaml

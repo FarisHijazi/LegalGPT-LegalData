@@ -16,7 +16,7 @@ repos:
       - id: detect-private-key # checks for private keys (BEGIN X PRIVATE KEY, etc.)
       - id: mixed-line-ending
         args: ["--fix=lf"] # convert mixed line endings to unix style
-      - id: end-of-file-fixer # makes sure files end in a newline and only a newline
+#      - id: end-of-file-fixer # makes sure files end in a newline and only a newline
       - id: check-case-conflict # check for files with names that would conflict on a case-insensitive filesystem
       - id: check-symlinks # check for symlinks
       - id: check-ast # check for syntax errors in python files
