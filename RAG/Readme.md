@@ -1,5 +1,7 @@
 # ARAGOG - Advanced Retrieval Augmented Generation Output Grading :spider:
 
+This is a modification of [https://github.com/predlico/ARAGOG](https://github.com/predlico/ARAGOG)
+
 This repository contains the code, data, and analysis for our study [link later] on advanced Retrieval-Augmented Generation (RAG) techniques. It's part of our scientific paper investigating the efficacy of various RAG techniques in enhancing the precision and contextual relevance of LLMs.
 
 ## Repository Structure
