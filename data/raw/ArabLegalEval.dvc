@@ -1,0 +1,6 @@
+outs:
+- md5: 3be29bdf4f709ff2a234fce4a369ce72.dir
+  size: 548569
+  nfiles: 3
+  hash: md5
+  path: ArabLegalEval
