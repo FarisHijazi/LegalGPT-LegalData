@@ -1,15 +1,27 @@
 # Importing necessary libraries for loading datasets, data manipulation, document processing, vector storage, and embeddings.
-from datasets import load_dataset
+import logging
+import os
+
+import chromadb
+import openai
 import pandas as pd
 from llama_index.core import Document, StorageContext, VectorStoreIndex
-from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.core.node_parser import SentenceWindowNodeParser
-import chromadb
-from llama_index.core.node_parser import TokenTextSplitter
-from utils import load_config
+from llama_index.core.node_parser import SentenceWindowNodeParser, TokenTextSplitter
 from llama_index.vector_stores.chroma import ChromaVectorStore
-import openai
-import os
+
+from utils import filter_large_nodes
+from dotenv import load_dotenv
+
+openai.log = 'error'
+
+
+load_dotenv()
+loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+# openai_loggers = [logger for logger in loggers if logger.name.startswith("openai")]
+
+for openai_logger in loggers:
+    openai_logger.setLevel(logging.WARNING)
+
 
 # Hardcoded values for easy adjustment
 CHUNK_SIZE = 1000  # only for db upload
@@ -17,12 +29,31 @@ TOKEN_CHUNK_SIZE = 512
 CHUNK_OVERLAP = 50
 
 # Load the config file
-load_config()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Load dataset and convert to DataFrame for easier manipulation
-dataset = load_dataset('jamescalam/ai-arxiv')
-df = pd.DataFrame(dataset['train'])
+# # Load dataset and convert to DataFrame for easier manipulation
+# dataset = load_dataset("jamescalam/ai-arxiv")
+# df = pd.DataFrame(dataset['train'])
+
+import json
+
+from datasets import Dataset
+
+with open('../data/processed/Legal Data/merged.organized.json', 'r', encoding='utf8') as f:
+    df = pd.DataFrame(json.load(f))
+print('Loaded dataset', df.shape)
+df['content'] = df['text']
+del df['contents']
+
+# df = df.head(100) #FIXME: remove this line
+dataset = Dataset.from_pandas(df)
+
+# # Assign all data to the 'train' split
+# dataset = dataset.train_test_split(test_size=0.000001, shuffle=False)
+
+# # Print the dataset information
+# print(dataset)
+
 
 # # Specify the titles of the required papers
 # required_paper_titles = [
@@ -53,14 +84,18 @@ df = pd.DataFrame(dataset['train'])
 documents = [Document(text=content) for content in df['content']]
 
 # Setup the embedding model
-embed_model = OpenAIEmbedding(model='text-embedding-3-large')
+# embed_model = OpenAIEmbedding(model="text-embedding-3-large", api_base="http://localhost:5004/openai")
+
+import utils
+
+embed_model = utils.get_embed_model()
 
 chroma_client = chromadb.PersistentClient(path='./chroma_db')
 
 # Classic vector DB
 # Initialize a text splitter with hardcoded values for chunking documents
 parser = TokenTextSplitter(chunk_size=TOKEN_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-nodes = parser.get_nodes_from_documents(documents)
+nodes = parser.get_nodes_from_documents(documents, show_progress=True)  # this takes time for some reason
 
 chroma_collection = chroma_client.create_collection('ai_arxiv_full')
 
@@ -91,20 +126,26 @@ index = VectorStoreIndex(
     nodes_sentence_window_filtered, storage_context=storage_context_sentence_window, embed_model=embed_model, use_async=True, show_progress=True
 )
 
-# Document summary index
-# LLM (gpt-3.5-turbo)
-from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import DocumentSummaryIndex, get_response_synthesizer
+
+# Document summary index
+from llama_index.core.node_parser import SentenceSplitter
 
 parser = TokenTextSplitter(chunk_size=3072, chunk_overlap=100)
 splits_doc_summary = parser.get_nodes_from_documents(documents)
 
 docs_for_summary = [Document(text=node.text, metadata=node.metadata) for node in splits_doc_summary]
 
+GENERATE_SUMMARY_INDEX = False
+
+if not GENERATE_SUMMARY_INDEX:
+    exit(0)
 
 # To customize your API key, do this
-# llm = MistralAI(api_key="")
+# llm = MistralAI(api_key=os.getenv("MISTRALAI_API_KEY")
 # feel free to use OpenAI models, we kept getting some weird errors.
+
+llm = utils.get_llm()
 
 # Initialize the sentence splitter
 splitter = SentenceSplitter(chunk_size=1024, chunk_overlap=100)
@@ -113,6 +154,7 @@ splitter = SentenceSplitter(chunk_size=1024, chunk_overlap=100)
 response_synthesizer = get_response_synthesizer(llm=llm, response_mode='tree_summarize', use_async=True)
 
 # Create the document summary index
+# TODO: make this run in parallel
 doc_summary_index = DocumentSummaryIndex.from_documents(
     docs_for_summary,
     llm=llm,
