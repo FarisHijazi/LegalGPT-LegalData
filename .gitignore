@@ -1,3 +1,6 @@
+*.bak
+*.bak/
+data/cachedir/*
 cachedir/*
 *.pdf
 *.PDF
