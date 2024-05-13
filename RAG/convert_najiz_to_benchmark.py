@@ -43,4 +43,4 @@ if __name__ == '__main__':
     outpath = args.najizFAQ_json.replace('.json', '.benchmark.json')
     with open(outpath, 'w') as f:
         json.dump(benchmark, f, indent=4, ensure_ascii=False)
-    print(f"Saved benchmark to {outpath}")
+    print(f'Saved benchmark to {outpath}')
