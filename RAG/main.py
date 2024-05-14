@@ -1,27 +1,33 @@
+import argparse
 import datetime
 import json
 import logging
 import os
+import pprint
 from multiprocessing.pool import ThreadPool
 
 import chromadb
 import dotenv
+import numpy as np
 import openai
 import pandas as pd
 import tonic_validate
 import yaml
 from dotenv import load_dotenv
 from easydict import EasyDict
-from llama_index.core import PromptTemplate, Settings, StorageContext, VectorStoreIndex, load_index_from_storage
+from llama_index.core import (PromptTemplate, Settings, StorageContext,
+                              VectorStoreIndex, load_index_from_storage)
 from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core.postprocessor import LLMRerank
-from llama_index.core.query_engine import RetrieverQueryEngine, TransformQueryEngine
+from llama_index.core.query_engine import (RetrieverQueryEngine,
+                                           TransformQueryEngine)
 from llama_index.core.retrievers import QueryFusionRetriever
 from llama_index.postprocessor.cohere_rerank import CohereRerank
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from tonic_validate import ValidateApi, ValidateScorer
-from tonic_validate.metrics import AnswerSimilarityMetric, RetrievalPrecisionMetric
+from tonic_validate.metrics import (AnswerSimilarityMetric,
+                                    RetrievalPrecisionMetric)
 from tqdm.auto import tqdm
 
 import utils
@@ -49,48 +55,39 @@ validate_api = ValidateApi(tonic_validate_api_key)
 # Service context
 # llm = OpenAI(model="gpt-3.5-turbo", temperature=0.0)
 
-# parser = argparse.ArgumentParser(description='Description of your program')
-# parser.add_argument('--collection_name', dest='collection_name', type=str, default='ai_arxiv', help='Name of the collection')
-# parser.add_argument('--benchmark_path', dest='benchmark_path', type=str, default='eval_questions/benchmark.json', help='Path to the benchmark file')
-# parser.add_argument('--interactive', dest='interactive', action='store_true', help='Enable interactive mode')
-# parser.add_argument('--outpath', dest='outpath', type=str, default='output/', help='Output path')
-# parser.add_argument('--config_path', dest='config_path', type=str, default='resources/defaults_en.yaml', help='Path to the config file')
-# parser.add_argument('--runs_per_exp', dest='runs_per_exp', type=int, default=10, help='Number of runs per experiment')
-# parser.add_argument('--benchmark_limit', dest='benchmark_limit', type=int, default=20, help='Limit of benchmark questions')
+parser = argparse.ArgumentParser(description='Description of your program', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--collection_name', type=str, default='ai_arxiv', help='Vectore DB collection name')
+parser.add_argument('--benchmark', '-b', type=str, default='eval_questions/benchmark.json', help='Path to the benchmark file')
+parser.add_argument('--interactive', '-i', action='store_true', help='Enable interactive mode')
+parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
+parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_en.yaml', help='Path to the config file')
+parser.add_argument('--runs_per_exp', '-r', type=int, default=10, help='Number of runs per experiment')
+parser.add_argument('--benchmark_limit', '-l', type=int, default=None, help='Limit of benchmark questions')
+parser.add_argument('--parallelism', '-p', type=int, default=2, help='Concurrency')
+args = parser.parse_args()
 
-# args = parser.parse_args()
-
-# args_collection_name = args.collection_name
-# args_benchmark_path = args.benchmark_path
-# args_interactive = args.interactive
-# args_outpath = args.outpath
-# args_config_path = args.config_path
-# args_runs_per_exp = args.runs_per_exp
-# args_benchmark_limit = args.benchmark_limit
 datetime_stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-args_collection_name = 'ai_arxiv'
-args_benchmark_path = 'eval_questions/benchmark.json'
-args_interactive = False
-args_config_path = 'resources/defaults_en.yaml'
-args_runs_per_exp = 10
-args_benchmark_limit = None
+# args.benchmark = '../data/raw/ArabLegalEval/najiz_FAQ_filtered_data_0805.benchmark.json'
+# args.benchmark = 'eval_questions/direct_qa.json'
+# args.interactive = False
+# args.config_path = 'resources/defaults_en.yaml'
+# args.runs_per_exp = 3
+# args.benchmark_limit = 20
+# args.parallelism = 3
 
 
 # get base filename without extension
-exp_name = os.path.splitext(os.path.basename(args_config_path))[0]
-args_outpath = f'output/{exp_name}/{datetime_stamp}'
+exp_name = os.path.splitext(os.path.basename(args.config_path))[0]
+args.outpath = 'outputs/{exp_name}/{datetime_stamp}'.format(
+    exp_name=exp_name,
+    datetime_stamp=datetime_stamp,
+)
 
 # Format the current date and time as YYYY-MM-DD-HH-MM-SS
 
 print('===== config =====')
-print(f'{args_collection_name=}')
-print(f'{args_benchmark_path=}')
-print(f'{args_interactive=}')
-print(f'{args_outpath=}')
-print(f'{args_config_path=}')
-print(f'{args_runs_per_exp=}')
-print(f'{args_benchmark_limit=}')
+pprint.pprint(vars(args))
 print('=================')
 
 ###############################################
@@ -100,32 +97,34 @@ print('=================')
 
 dotenv.load_dotenv()
 
-os.makedirs(args_outpath, exist_ok=True)
 
-config = EasyDict(yaml.safe_load(open(args_config_path)))
+config = EasyDict(yaml.safe_load(open(args.config_path)))
 config
 
+args.config = vars(config)
+
+# llms = utils.get_llms()
 
 llm = utils.get_llm()
 embed_model = utils.get_embed_model()
 
 
 Settings.embed_model = embed_model
-Settings.llm = llm
+# Settings.llm = llm
 
 chroma_client = chromadb.PersistentClient(path='./chroma_db')
 # Traditional VDB
-chroma_collection = chroma_client.get_collection(f'{args_collection_name}_full')
+chroma_collection = chroma_client.get_collection(f'{config.COLLECTION_NAME}_full')
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
 # Sentence window VDB
-chroma_collection_sentence_window = chroma_client.get_collection(f'{args_collection_name}_sentence_window')
+chroma_collection_sentence_window = chroma_client.get_collection(f'{config.COLLECTION_NAME}_sentence_window')
 vector_store_sentence_window = ChromaVectorStore(chroma_collection=chroma_collection_sentence_window)
 index_sentence_window = VectorStoreIndex.from_vector_store(vector_store=vector_store_sentence_window)
 # Document summary VDB
 
 # storage_context = StorageContext.from_defaults(persist_dir="Obelix")
-storage_context = StorageContext.from_defaults(persist_dir=f'{args_collection_name}_doc_summary')
+storage_context = StorageContext.from_defaults(persist_dir=f'{config.COLLECTION_NAME}_doc_summary')
 doc_summary_index = load_index_from_storage(llm=llm, storage_context=storage_context, embed_model=embed_model)
 
 text_qa_template = PromptTemplate(config.TEXT_QA_TEMPLATE)
@@ -135,10 +134,11 @@ text_qa_template = PromptTemplate(config.TEXT_QA_TEMPLATE)
 # benchmark = validate_api.get_benchmark(tonic_validate_benchmark_key)
 
 # benchmark_json = json.loads(open('eval_questions/benchmark.json', 'r').read())
-benchmark_json = json.loads(open(args_benchmark_path, 'r').read())
+benchmark_json = json.loads(open(args.benchmark, 'r').read())
+assert 'context' in benchmark_json
 
 benchmark = tonic_validate.classes.benchmark.Benchmark(
-    benchmark_json['questions'][:args_benchmark_limit], benchmark_json['ground_truths'][:args_benchmark_limit], 'ARAGOG'
+    benchmark_json['questions'][: args.benchmark_limit], benchmark_json['ground_truths'][: args.benchmark_limit], 'ARAGOG'
 )
 assert len(benchmark.items) > 0, 'Benchmark is empty. Please provide a non-empty benchmark.'
 
@@ -151,9 +151,62 @@ scorer = ValidateScorer(metrics=[RetrievalPrecisionMetric(), AnswerSimilarityMet
 
 ### Define query engines -------------------------------------------------------------------------------------------------
 
+
+# Store nodes in a list
 # norag
-index_norag = VectorStoreIndex(nodes=[])
-query_engine_llm_norag = index_norag.as_query_engine(llm=llm, text_qa_template=PromptTemplate(config.TEXT_QA_NORAG_TEMPLATE))
+
+import os
+
+from llama_index.core import Document, StorageContext, VectorStoreIndex
+from llama_index.core.node_parser import TokenTextSplitter
+
+index_nocontext = VectorStoreIndex(
+    nodes=TokenTextSplitter(chunk_size=1000, chunk_overlap=10).get_nodes_from_documents([Document(text='(no context provided)')], show_progress=True)
+)
+query_engine_llm_norag = index_nocontext.as_query_engine(llm=llm)
+query_engine_llm_golden_context = index_nocontext.as_query_engine(llm=llm)
+
+
+import llama_index.core.instrumentation as instrument
+from llama_index.core.base.response.schema import RESPONSE_TYPE
+from llama_index.core.callbacks.schema import CBEventType, EventPayload
+from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
+
+dispatcher = instrument.get_dispatcher(__name__)
+
+
+@dispatcher.span
+def _query(self, query_bundle: QueryBundle) -> RESPONSE_TYPE:
+    """Answer a query."""
+    with self.callback_manager.event(CBEventType.QUERY, payload={EventPayload.QUERY_STR: query_bundle.query_str}) as query_event:
+
+        question_index = benchmark_json['questions'].index(query_bundle.query_str)
+        contexts = [benchmark_json['context'][question_index]]
+        nodes = [NodeWithScore(node=TextNode(text=context), score=1.0) for context in contexts]
+        response = self._response_synthesizer.synthesize(
+            query=query_bundle,
+            nodes=nodes,
+        )
+        query_event.on_end(payload={EventPayload.RESPONSE: response})
+
+    return response
+
+
+from types import MethodType
+
+index_nocontext = VectorStoreIndex(
+    nodes=TokenTextSplitter(chunk_size=1000, chunk_overlap=10).get_nodes_from_documents([Document(text='(no context provided)')], show_progress=True)
+)
+query_engine_llm_norag = index_nocontext.as_query_engine(llm=llm, text_qa_template=PromptTemplate(config.TEXT_QA_NORAG_TEMPLATE))
+query_engine_llm_golden_context = index_nocontext.as_query_engine(llm=llm, text_qa_template=PromptTemplate(config.TEXT_QA_NORAG_TEMPLATE))
+query_engine_llm_golden_context._query = MethodType(_query, query_engine_llm_golden_context)
+
+query_engine_golden_llm_golden_context = index_nocontext.as_query_engine(llm=utils.GroundTruthFakeLLM(benchmark=benchmark))
+query_engine_golden_llm_golden_context._query = MethodType(_query, query_engine_golden_llm_golden_context)
+
+
+from llama_index.core.base.response.schema import RESPONSE_TYPE
+from llama_index.core.schema import NodeWithScore, QueryBundle
 
 # Naive RAG
 query_engine_naive = index.as_query_engine(llm=llm, text_qa_template=text_qa_template, similarity_top_k=3, embed_model=embed_model)
@@ -233,17 +286,19 @@ query_engine_hyde_doc_summary_rerank = TransformQueryEngine(query_engine_doc_sum
 # Dictionary of experiments, now referencing the predefined query engine objects
 experiments = {
     # TODO: add regular non-RAG LLM
-    'Raw LLM': query_engine_llm_norag,
+    'LLM NoContext': query_engine_llm_norag,
+    'LLM GoldContext': query_engine_llm_golden_context,
+    'GoldLLM GoldContext': query_engine_golden_llm_golden_context,
     # 'Classic VDB + Naive RAG': query_engine_naive,
-    # "Classic VDB + Cohere Rerank": query_engine_rerank,
-    # "Classic VDB + LLM Rerank": query_engine_llm_rerank,
+    # 'Classic VDB + Cohere Rerank': query_engine_rerank,
+    # 'Classic VDB + LLM Rerank': query_engine_llm_rerank,
     # "Classic VDB + HyDE": query_engine_hyde,
     # "Classic VDB + HyDE + Cohere Rerank": query_engine_hyde_rerank,
     # 'Classic VDB + HyDE + LLM Rerank': query_engine_hyde_llm_rerank,
     # "Classic VDB + Maximal Marginal Relevance (MMR)": query_engine_mmr,
     # "Classic VDB + Multi Query + Reciprocal": query_engine_multi_query,
     # "Classic VDB + Multi Query + Cohere rerank": query_engine_multi_query_rerank,
-    'Sentence window retrieval': query_engine_sentence_window,
+    # 'Sentence window retrieval': query_engine_sentence_window,
     # "Sentence window retrieval + Cohere rerank": query_engine_sentence_window_rerank,
     # "Sentence window retrieval + LLM Rerank": query_engine_sentence_window_llm_rerank,
     # "Sentence window retrieval + HyDE": query_engine_sentence_window_hyde,
@@ -254,11 +309,11 @@ experiments = {
 }
 
 
-if args_interactive:
+if args.interactive:
     show_sources = True
     # qa = retrieval_qa_pipline(device_type, use_history, promptTemplate_type=model_type)
     qa = query_engine_sentence_window_hyde_llm_rerank
-    # args_interactive questions and answers
+    # args.interactive questions and answers
     while True:
         query = input('\nEnter a query: ')
         if query == 'exit':
@@ -292,8 +347,8 @@ if args_interactive:
 all_experiments_results_df = pd.DataFrame(columns=['Run', 'Experiment', 'OverallScores'])
 
 
-def run_experiment_wrapper(args):
-    i, (experiment_name, query_engine) = args
+def run_experiment_wrapper(_args):
+    i, (experiment_name, query_engine) = _args
     return run_experiment(
         experiment_name,
         query_engine,
@@ -301,13 +356,14 @@ def run_experiment_wrapper(args):
         benchmark,
         validate_api,
         tonic_validate_project_key=tonic_validate_project_key,
-        runs=args_runs_per_exp,
+        runs=args.runs_per_exp,
         experiment_index=i,
+        parallelism=args.parallelism,
     )  # Adjust the number of runs as needed
 
 
 # Use ThreadPool.map to run the experiments in parallel
-experiment_results_dfs = ThreadPool(processes=len(experiments)).map(
+experiment_results_dfs = ThreadPool(processes=args.parallelism).map(
     run_experiment_wrapper, tqdm(list(enumerate(experiments.items())), desc='Running Experiments')
 )
 # experiment_results_dfs = list(map(run_experiment_wrapper, tqdm(list(enumerate(experiments.items())), desc="Running Experiments")))
@@ -317,14 +373,26 @@ all_experiments_results_df = pd.concat(experiment_results_dfs, ignore_index=True
 # Assuming all_experiments_results_df is your DataFrame
 all_experiments_results_df['RetrievalPrecision'] = all_experiments_results_df['OverallScores'].apply(lambda x: x.get('retrieval_precision', None))
 
+os.makedirs(args.outpath, exist_ok=True)
+with open(os.path.join(args.outpath, 'args.yaml'), 'w', encoding='utf8') as f:
+    yaml.dump(vars(args), f, default_flow_style=False, allow_unicode=True)
+
 print('done running experiments, saving intermediate results in all_experiments_results_df.csv')
-all_experiments_results_df.to_csv(os.path.join(args_outpath, 'all_experiments_results.csv'), index=False)
-print('saved to', os.path.join(args_outpath, 'all_experiments_results.csv'))
+all_experiments_results_df.to_csv(os.path.join(args.outpath, 'all_experiments_results.csv'), index=False)
+print('saved to', os.path.join(args.outpath, 'all_experiments_results.csv'))
+
+# show DF
+print(all_experiments_results_df)
+
+df_rundata = pd.json_normalize([x[0] for x in list(all_experiments_results_df['RunData'])])
+df_rundata.to_csv(os.path.join(args.outpath, 'rundata.csv'))
+
 
 if len(experiments) < 3:
     print("Can't run statistics for less than 3 experiments")
     exit(0)
 
+np.seterr(divide='ignore', invalid='ignore')
 # Check for normality and homogeneity of variances
 from scipy.stats import shapiro
 
@@ -374,4 +442,4 @@ import matplotlib.pyplot as plt
 tukey_result.plot_simultaneous()
 plt.show()
 # save output to path
-plt.savefig(os.path.join(args_outpath, 'stats.png'))
+plt.savefig(os.path.join(args.outpath, 'stats.png'))

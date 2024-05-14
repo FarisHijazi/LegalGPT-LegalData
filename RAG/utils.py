@@ -1,9 +1,60 @@
-import os
 import time
 from multiprocessing.pool import ThreadPool
-
 import pandas as pd
 from tqdm.auto import tqdm
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.openai import OpenAI
+from typing import Any
+
+from llama_index.core.llms import (
+    CustomLLM,
+    CompletionResponse,
+    CompletionResponseGen,
+    LLMMetadata,
+)
+from llama_index.core.llms.callbacks import llm_completion_callback
+import tonic_validate
+
+
+class GroundTruthFakeLLM(CustomLLM):
+    """
+    always gives perfect answer from the benchmark
+    """
+
+    benchmark: tonic_validate.classes.benchmark.Benchmark = None
+    model_name: str = 'Ground truth fake LLM'
+
+    @property
+    def metadata(self) -> LLMMetadata:
+        """Get LLM metadata."""
+        return LLMMetadata(
+            benchmark=self.benchmark,
+            model_name=self.model_name,
+        )
+
+    @llm_completion_callback()
+    def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
+        ## search through all the questions and find the index where the question is inside the prompt (cuz prompt might have some template stuff around it)
+        ## then take the index and get the corresponding answer and respond :D
+        ## then just verify it's working in the notebook, then verify it works with benchmark
+        ## then commit and push benchmark code
+        ## then put the loop of LLMs and run the benchmark :DDD
+        index_of_matching_question = -1
+        for i, question in enumerate(self.benchmark.items):
+            if question.question in str(prompt):
+                index_of_matching_question = i
+                break
+        assert index_of_matching_question != -1
+        answer = self.benchmark.items[index_of_matching_question].answer
+        return CompletionResponse(text=answer)
+
+    @llm_completion_callback()
+    def stream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponseGen:
+        response = ''
+        for token in self.dummy_response:
+            response += token
+            yield CompletionResponse(text=response, delta=token)
 
 
 def remove_nul_chars_from_string(s):
@@ -57,6 +108,7 @@ def run_experiment(
     tonic_validate_project_key: str = None,
     runs=5,
     experiment_index=None,
+    parallelism=5,
 ):
     # List to store results dictionaries
     def process_run(i):
@@ -66,13 +118,13 @@ def run_experiment(
         retries = 5
         for retry in range(retries):
             try:
-                run = scorer.score(benchmark, get_llama_response_func, callback_parallelism=3, scoring_parallelism=3)  # TODO: len(benchmark)
+                run = scorer.score(benchmark, get_llama_response_func, callback_parallelism=parallelism, scoring_parallelism=parallelism)
                 break
             except Exception as e:
                 print(f'Error: in {experiment_name} Run {i+1}:', e)
                 # print('llm_answer:', run.run_data.llm_answer)
                 print(f'Retrying {retry+1}/{retries}...')
-                time.sleep(1)
+                time.sleep(5)
         else:
             # return None
             raise Exception(f'Failed to run {experiment_name} Run {i+1} after {retries} retries.')
@@ -88,10 +140,15 @@ def run_experiment(
 
         overall_scores = {'retrieval_precision': None, 'answer_similarity': None}
         overall_scores.update(run.overall_scores)
-        return {'Run': i + 1, 'Experiment': experiment_name, 'OverallScores': overall_scores}
+        return {
+            'Run': i + 1,
+            'Experiment': experiment_name,
+            'OverallScores': overall_scores,
+            'RunData': [x.to_dict() for x in run.run_data],
+        }
 
     # Use ThreadPool to process runs in parallel
-    with ThreadPool(processes=runs) as pool:
+    with ThreadPool(processes=parallelism) as pool:
         results_list = list(
             tqdm(
                 pool.imap(process_run, range(runs)),
@@ -143,8 +200,6 @@ def filter_large_nodes(nodes, max_length=8000):
             filtered_nodes.append(node)
     return filtered_nodes
 
-
-import os
 
 from llama_index.embeddings.openai import OpenAIEmbedding
 
