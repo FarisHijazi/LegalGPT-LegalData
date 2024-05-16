@@ -1,7 +1,6 @@
 *.bak
 *.bak/
-data/cachedir/*
-cachedir/*
+**/cachedir/**
 *.pdf
 *.PDF
 # Byte-compiled / optimized / DLL files
