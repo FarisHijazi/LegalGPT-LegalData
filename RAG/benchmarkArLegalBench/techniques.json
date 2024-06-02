@@ -1,0 +1,7 @@
+{
+    "techniques": {
+        "zero-shot": "prompts/zero_shot.txt",
+        "one-shot": "prompts/one_shot.txt",
+        "few-shot": "prompts/few_shot.txt"
+    }
+}
