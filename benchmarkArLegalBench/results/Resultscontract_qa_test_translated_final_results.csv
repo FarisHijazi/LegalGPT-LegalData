@@ -1,0 +1,407 @@
+exp_id,model,technique,prompt,dataset,f1_score,precision,recall,accuracy,balanced_accuracy,number_of_contracts
+012573ef2ba7a7279cff9356935281ea,gpt-35-turbo-16k-2023-03-15-preview,few-shot,"Given a text from a contract and a related Question, Answer the Question with أجل or لا in Arabic:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.8874824191279889,0.8890977443609023,0.8883677298311445,0.8875,0.8883677298311445,80
+06cd398f558a4df985fbfd35751ae72f,claude-3-opus-20240229,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.3616233766233766,0.36869095816464237,0.3548467792370231,0.8875,0.8871169480925578,80
+0a075e3c69798d95b0c891bb2ef63ebf,gpt-35-turbo-16k-2023-03-15-preview,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9245757385292268,0.9301587301587302,0.9237023139462164,0.925,0.9237023139462164,80
+0afe9032d96c09f6f62ab9ad61ab0c40,gpt4-2024-02-15-preview,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9245757385292268,0.9301587301587302,0.9237023139462164,0.925,0.9237023139462164,80
+11ad2cd55ae08a8dd43f957228cd8ad5,claude-3-opus-20240229,few-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.03816738816738816,0.05381944444444445,0.030331457160725453,0.55,0.5459662288930581,80
+121fa162de2e9ae9f630b764eeea16f7,Meta-Llama-3-8B-Instruct-nulnk,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.5637254901960784,0.623030303030303,0.5303314571607255,0.8,0.7954971857410882,80
+2163457104e02c1faf3fe91ce56498c1,gpt4-2024-02-15-preview,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9624471913628541,0.963032581453634,0.9621638524077548,0.9625,0.9621638524077548,80
+25bf2e2c782dac47b3e3a59428ceab14,Cohere-command-r-plus-uptoi,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.2877759432520027,0.3146198830409357,0.2662080466958516,0.8,0.7986241400875547,80
+28af23dcc6d7e2f52f0d649ebcb8bc67,Cohere-command-r-kscml,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9249999999999999,0.9255784865540964,0.9255784865540964,0.925,0.9255784865540964,80
+29f8add8ac37d323464052b9d3a972b8,Meta-Llama-3-8B-Instruct-nulnk,Zero-shot,"Given a text from a contract and a related Question, Answer the Question with أجل for Yes or لا for No. Don't add any more details to the Answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.2561007381676075,0.3547169811320755,0.2512820512820513,0.6375,0.6282051282051282,80
+2e913d1dcc25b4e9bfdba1e5290ec7c7,Meta-Llama-3-70B-Instruct-zjjnw,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9623529411764706,0.9659090909090908,0.9615384615384616,0.9625,0.9615384615384616,80
+3871517732fda2354e6049a39c16006e,claude-3-opus-20240229,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.0512214342001576,0.08674463937621832,0.05371412688485859,0.475,0.4834271419637273,80
+3965077e105d8dff8892864a3943cf75,Cohere-command-r-plus-uptoi,few-shot,"Given a text from a contract and a related Question, Answer the Question with أجل or لا in Arabic:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9874980465697765,0.9875,0.9878048780487805,0.9875,0.9878048780487805,80
+399c7a4e51b1341b2b56dd6bc139cbaa,Cohere-command-r-kscml,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.6175814368585453,0.6406926406926406,0.5987075255367938,0.9,0.8980612883051907,80
+43594ce53f94cb5c5464b89246e39817,Cohere-command-r-kscml,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.949874686716792,0.951602765556254,0.949343339587242,0.95,0.949343339587242,80
+5eda907c6722cc83ec9087f17572631e,claude-3-opus-20240229,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.13773821115593268,0.14888337468982632,0.12849377014480204,0.8375,0.8352095059412132,80
+693ff81dabf613b35705d544abe7a88d,Cohere-command-r-plus-uptoi,Zero-shot,"Given a text from a contract and a related Question, Answer the Question with أجل for Yes or لا for No. Don't add any more details to the Answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.5028824833702883,0.6422764227642276,0.4456952261830311,0.675,0.6685428392745466,80
+6e4df92d2258c42a3a464bdbe58420d5,Meta-Llama-3-8B-Instruct-nulnk,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.42858432647165046,0.4630489864864865,0.39931207004377733,0.8,0.7986241400875547,80
+71d6b65d98ef947969621d90ca514080,Meta-Llama-3-70B-Instruct-zjjnw,Zero-shot,"Given a text from a contract and a related Question, Answer the Question with أجل for Yes or لا for No. Don't add any more details to the Answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.8984126984126984,0.9183673469387755,0.8974358974358974,0.9,0.8974358974358974,80
+740a913f7bc1cf5cab4b82958ec4257e,Cohere-command-r-kscml,few-shot,"Given a text from a contract and a related Question, Answer the Question with أجل or لا in Arabic:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.8870588235294118,0.8983375959079284,0.889618511569731,0.8875,0.889618511569731,80
+75bd1574048e05e772d5ae59a357fdac,Cohere-command-r-plus-uptoi,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9624471913628541,0.963032581453634,0.9621638524077548,0.9625,0.9621638524077548,80
+7861522d16b6e8bf018ed45baea7e68b,Cohere-command-r-plus-uptoi,One-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9372549019607843,0.9406565656565656,0.9365228267667292,0.9375,0.9365228267667292,80
+7e5578d738054062f66afd4efb4da1fe,gpt-35-turbo-16k-2023-03-15-preview,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.5902707560948208,0.6185185185185186,0.5730664998957682,0.8625,0.8595997498436523,80
+8db770a212e869cf46c7455905393015,Meta-Llama-3-70B-Instruct-zjjnw,few-shot,"Given a text from a contract and a related Question, Answer the Question with أجل or لا in Arabic:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.623015873015873,0.6434108527131782,0.6072545340838024,0.9125,0.9108818011257036,80
+a3fbb06e201721752260bd70a7b8662e,Meta-Llama-3-70B-Instruct-zjjnw,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.5935587761674719,0.6122448979591837,0.5897435897435898,0.8875,0.8846153846153846,80
+a47a89c0cb33c708f37c35e687dd370f,gpt-35-turbo-16k-2023-03-15-preview,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.8999374609130707,0.9032055311125078,0.9011882426516573,0.9,0.9011882426516573,80
+b6fcc8fff0e3a21acf6a1de2a6746194,Meta-Llama-3-70B-Instruct-zjjnw,few_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9749843652282677,0.9749843652282677,0.9749843652282677,0.975,0.9749843652282677,80
+b9846909fda9a4bfdeee14f78ece04d6,gpt4-2024-02-15-preview,few-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.9749373433583961,0.9767441860465116,0.9743589743589743,0.975,0.9743589743589743,80
+c4463d04f357fa0a341a4e9be0d5d5ac,gpt4-2024-02-15-preview,Zero-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.9245757385292268,0.9301587301587302,0.9237023139462164,0.925,0.9237023139462164,80
+c83c144005418103fda64c8b6794f3c4,gpt-35-turbo-16k-2023-03-15-preview,Zero-shot,"Given a text from a contract and a related Question, Answer the Question with أجل for Yes or لا for No. Don't add any more details to the Answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.4962877624167947,0.5961538461538461,0.47863247863247865,0.725,0.717948717948718,80
+dd5bed7d028b265826dffb4050bbffd3,Cohere-command-r-kscml,Zero-shot,"Given a text from a contract and a related Question, Answer the Question with أجل for Yes or لا for No. Don't add any more details to the Answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.9374902328488826,0.9375,0.9377736085053159,0.9375,0.9377736085053159,80
+f5768c194082982e2f86eecfd4bda77f,Meta-Llama-3-8B-Instruct-nulnk,Zero_shot_detailed,"You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.1839080459770115,0.17391304347826086,0.1951219512195122,0.5,0.4878048780487805,80
+f8c33c6751cbc9bc5734f5bb9572a1ce,claude-3-opus-20240229,Zero-shot,"Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+ 
+contract: {contract}
+Question: {Question}
+ Answer:",contract_qa_test_translated_final.json,0.9499687304565353,0.9499687304565353,0.9499687304565353,0.95,0.9499687304565353,80
+fe46b9f0020317cb56c1fe402e8a3c0d,Meta-Llama-3-8B-Instruct-nulnk,few-shot,"Given a text from a contract and a related Question, Answer the Question with أجل or لا in Arabic:
+
+contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
+Question: هل يناقش البند انتهاكات بيانات PII؟
+Answer: أجل
+
+contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+Question: هل يتنازل الشرط عن السرية؟
+Answer: لا
+
+contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
+Question: هل يناقش البند التعويض الشخصي؟
+Answer: لا
+
+contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+Question: هل يناقش البند حل النزاعات؟""
+Answer: أجل
+
+contract: {contract}
+Question: {Question}
+Answer:",contract_qa_test_translated_final.json,0.011408199643493763,0.0196078431372549,0.008044243338360985,0.2,0.20512820512820512,80

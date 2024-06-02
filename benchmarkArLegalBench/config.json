@@ -1,0 +1,54 @@
+{
+    "models": {
+        "Cohere-command-r-kscml": {
+            "type": "OpenAI",
+            "engine": "Cohere-command-r-kscml",
+            "api_base": "https://Cohere-command-r-kscml-serverless.eastus2.inference.ai.azure.com",
+            "api_key": "KoEaeiNkGrUm1oqGLuvDH8mH2lxQBpYu"
+        },
+        "gpt-35-turbo-16k-2023-03-15-preview": {
+            "type": "AzureOpenAI",
+            "engine": "gpt-35-turbo-16k",
+            "azure_endpoint": "https://THQ-rd-openai.openai.azure.com/",
+            "api_key": "8dad21f98dff4baaa6e4f637e4a79fa9",
+            "api_version": "2024-02-15-preview"
+        },
+        "gpt4-2024-02-15-preview": {
+            "type": "AzureOpenAI",
+            "engine": "gpt-4",
+            "azure_endpoint": "https://Cohere-command-r-kscml-serverless.eastus2.inference.ai.azure.com",
+            "api_key": "KoEaeiNkGrUm1oqGLuvDH8mH2lxQBpYu",
+            "api_version": "2024-02-15-preview"
+        },
+        "Cohere-command-r-plus-uptoi": {
+            "type": "OpenAI",
+            "engine": "Cohere-command-r-plus-uptoi",
+            "api_base": "https://Cohere-command-r-plus-uptoi-serverless.eastus2.inference.ai.azure.com",
+            "api_key": "N3KUBd1tsfxituEDcC7GuGjdKjhpW77O"
+        },
+        "Meta-Llama-3-70B-Instruct-zjjnw": {
+            "type": "OpenAI",
+            "engine": "Meta-Llama-3-70B-Instruct-zjjnw",
+            "api_base": "https://Meta-Llama-3-70B-Instruct-zjjnw-serverless.eastus2.inference.ai.azure.com",
+            "api_key": "apWCYdH0xfuuEaVzJmc9fxeH0KGNuecu"
+        },
+        "Meta-Llama-3-8B-Instruct-nulnk": {
+            "type": "OpenAI",
+            "engine": "Meta-Llama-3-8B-Instruct-nulnk",
+            "api_base": "https://Meta-Llama-3-8B-Instruct-nulnk-serverless.eastus2.inference.ai.azure.com",
+            "api_key": "8iwj8FdkQAOV5fm0l66BgIwMy6JjJhxB"
+        },
+        "claude-3-opus-20240229": {
+            "type": "Anthropic",
+            "model_id": "claude-3-opus-20240229",
+            "api_key": "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"
+        }
+    },
+    "techniques": {
+        "few-shot": "prompts/few_shot.txt",
+        "Zero-shot": "prompts/Zero_shot.txt",
+        "One-shot": "prompts/One_shot.txt",
+        "Zero_shot_detailed": "prompts/Zero_shot_detailed.txt"
+    },
+    "dataset_file": "./tasks/contract_qa_test_translated_final.json"
+}
