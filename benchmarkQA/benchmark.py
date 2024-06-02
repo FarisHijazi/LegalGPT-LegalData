@@ -5,43 +5,21 @@ import logging
 import os
 import pprint
 import re
-import shlex
 import time
 from multiprocessing.pool import ThreadPool
 
-import chromadb
 import dotenv
 import llama_index.core.instrumentation as instrument
-import numpy as np
 import openai
 import pandas as pd
 import tonic_validate
 import yaml
 from dotenv import load_dotenv
 from easydict import EasyDict
-from llama_index.core import (Document, PromptTemplate, Settings,
-                              StorageContext, VectorStoreIndex,
-                              load_index_from_storage)
-from llama_index.core.base.response.schema import RESPONSE_TYPE
-from llama_index.core.callbacks.schema import CBEventType, EventPayload
-from llama_index.core.indices.query.query_transform import HyDEQueryTransform
-from llama_index.core.node_parser import TokenTextSplitter
-from llama_index.core.postprocessor import LLMRerank
-from llama_index.core.query_engine import (RetrieverQueryEngine,
-                                           TransformQueryEngine)
-from llama_index.core.retrievers import QueryFusionRetriever
-from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
-from llama_index.postprocessor.cohere_rerank import CohereRerank
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from statsmodels.stats.multicomp import pairwise_tukeyhsd
-from tonic_validate import ValidateApi, ValidateScorer
-from tonic_validate.metrics import (AnswerSimilarityMetric,
-                                    RetrievalPrecisionMetric)
 from tqdm.auto import tqdm
 import random
 
 import utils
-from utils import run_experiment
 
 dispatcher = instrument.get_dispatcher(__name__)
 
@@ -52,7 +30,7 @@ for logger in loggers:
     logger.setLevel(logging.WARNING)
 
 
-### SETUP 
+### SETUP
 # --------------------------------------------------------------------------------------------------------------
 # Load the config file (.env vars)
 load_dotenv()
@@ -67,7 +45,9 @@ cohere_api_key = os.getenv('COHERE_API_KEY')
 
 parser = argparse.ArgumentParser(description='Description of your program', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--collection_name', type=str, default='ai_arxiv', help='Vectore DB collection name')
-parser.add_argument('--benchmark', '-b', type=str, default='../experiments/NajizFAQ/Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file')
+parser.add_argument(
+    '--benchmark', '-b', type=str, default='../experiments/NajizFAQ/Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file'
+)
 parser.add_argument('--interactive', '-i', action='store_true', help='Enable interactive mode')
 parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
 parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_faris.yaml', help='Path to the config file')
@@ -79,7 +59,6 @@ parser.add_argument('--llm_cache', action='store_true', help='Use LLM cache')
 args = parser.parse_args()
 
 datetime_stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
 
 
 # get base filename without extension
@@ -113,11 +92,7 @@ benchmark_df = pd.DataFrame(json.loads(open(args.benchmark, 'r').read()))
 if args.benchmark_limit is not None:
     benchmark_df = benchmark_df.sample(n=args.benchmark_limit)
 
-tonic_benchmark = tonic_validate.classes.benchmark.Benchmark(
-    list(benchmark_df['questions']),
-    list(benchmark_df['ground_truths']),
-    'ARAGOG'
-)
+tonic_benchmark = tonic_validate.classes.benchmark.Benchmark(list(benchmark_df['questions']), list(benchmark_df['ground_truths']), 'ARAGOG')
 
 llms = utils.get_llms(use_cache=args.llm_cache, benchmark=tonic_benchmark)
 # del llms['claude-3-opus-20240229']
@@ -141,10 +116,11 @@ def run_question(llm, question, context=None):
         return llm.complete(config.TEXT_QA_NORAG_TEMPLATE.format(query_str=question))
     else:
         return llm.complete(config.TEXT_QA_TEMPLATE.format(query_str=question, context_str=context))
-        
+
 
 def benchmark_llm(i_llm_name_llm, with_context=True):
-    i, (llm_name, llm) = i_llm_name_llm    
+    i, (llm_name, llm) = i_llm_name_llm
+
     def evaluate_question(question_i_llm_question_ground_truth_context):
         question_i, (question, ground_truth, context) = question_i_llm_question_ground_truth_context
         if not with_context:
@@ -161,11 +137,12 @@ def benchmark_llm(i_llm_name_llm, with_context=True):
                 # randomly pick each time
                 judge_llm = random.choice(judge_llms)
                 judge_response = judge_llm.complete(
-                    config.ANSWER_SIMILARITY_TEMPLATE +
+                    config.ANSWER_SIMILARITY_TEMPLATE
+                    +
                     # f"\n\nContext\n{context}" +
-                    f'\n\nQuestion: "{question}"' + 
-                    f'\n\nReference answer: "{ground_truth}"' + 
-                    f'\n\nReference new answer:\n{llm_answer}'
+                    f'\n\nQuestion: "{question}"'
+                    + f'\n\nReference answer: "{ground_truth}"'
+                    + f'\n\nReference new answer:\n{llm_answer}'
                 )
                 # print('judge_response', judge_response)
                 judge_score = int(re.search(r'([\d\.]+)', str(judge_response)).group(1))
@@ -185,16 +162,18 @@ def benchmark_llm(i_llm_name_llm, with_context=True):
             'answer_similarity': judge_score,
         }
 
-    llm_results = list(tqdm(
-        ThreadPool(args.question_parallelism).imap(
-            evaluate_question,
-            enumerate(zip(benchmark_df['questions'], benchmark_df['ground_truths'], benchmark_df['context'])),
-        ),
-        desc=f'benchmarking {llm_name}',
-        total=len(benchmark_df),
-        position=i,
-        leave=False,
-    ))
+    llm_results = list(
+        tqdm(
+            ThreadPool(args.question_parallelism).imap(
+                evaluate_question,
+                enumerate(zip(benchmark_df['questions'], benchmark_df['ground_truths'], benchmark_df['context'])),
+            ),
+            desc=f'benchmarking {llm_name}',
+            total=len(benchmark_df),
+            position=i,
+            leave=False,
+        )
+    )
     return llm_results
 
 
@@ -215,7 +194,7 @@ results = [item for sublist in results_list for item in sublist]
 # join where left key is question_i and right key is index
 results_df = pd.DataFrame(results).join(benchmark_df, on='question_i', rsuffix='_r')
 
-results_df['Experiment'] = results_df['llm'] + ' | ' + results_df['context'].apply(lambda x: "with Context" if x else "w/o Context")
+results_df['Experiment'] = results_df['llm'] + ' | ' + results_df['context'].apply(lambda x: 'with Context' if x else 'w/o Context')
 df_outpath = os.path.join(args.outpath, 'results.csv')
 results_df.to_csv(df_outpath, index=False)
 print('results be saved here', df_outpath)
@@ -228,4 +207,3 @@ results_df
 # os.makedirs(args.outpath, exist_ok=True)
 # with open(os.path.join(args.outpath, 'args.yaml'), 'w', encoding='utf8') as f:
 #     yaml.dump(vars(args), f, default_flow_style=False, allow_unicode=True)
-

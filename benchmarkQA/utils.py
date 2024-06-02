@@ -3,9 +3,9 @@ from multiprocessing.pool import ThreadPool
 import pandas as pd
 from tqdm.auto import tqdm
 from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.openai import OpenAI
 from typing import Any
+import joblib
 
 from llama_index.core.llms import (
     CustomLLM,
@@ -124,7 +124,7 @@ def run_experiment(
                 print(f'Error: in {experiment_name} Run {i+1}:', e)
                 # print('llm_answer:', run.run_data.llm_answer)
                 print(f'Retrying {retry+1}/{retries}...')
-                time.sleep(5)
+                time.sleep(10)
         else:
             # return None
             raise Exception(f'Failed to run {experiment_name} Run {i+1} after {retries} retries.')
@@ -213,20 +213,42 @@ def get_embed_model():
     return embed_model
 
 
-def get_llm():
-    from llama_index.llms.azure_openai import AzureOpenAI
-
-    llm = AzureOpenAI(
-        # model="gpt-4-32k",
-        engine=os.environ['AZURE_OPENAI_DEPLOYMENT_NAME'],
-        api_key=os.environ['AZURE_OPENAI_API_KEY'],
-        azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'],
-        api_version=os.environ['AZURE_OPENAI_API_VERSION'],
-    )
-    llm.complete('hi')
+def get_llms(use_cache=False, benchmark=None):
+    llms = {}
     # llm = MistralAI(api_key=os.getenv("MISTRALAI_API_KEY")
-    # llm = OpenAI('gpt-4', api_key=os.getenv("OPENAI_API_KEY"))
-    # llm = OpenAI('gpt-3.5-turbo', api_key=os.getenv('OPENAI_API_KEY'))
-    # llm = Anthropic("claude-3-opus-20240229", api_key=os.getenv("ANTHROPIC_API_KEY"))
+    if benchmark is not None:
+        llms['GroundTruthLLM'] = GroundTruthFakeLLM(benchmark=benchmark)
+
+    llms['Cohere-command-r-kscml'] = OpenAI(
+        engine='Cohere-command-r-kscml',
+        api_base='https://...',
+        api_key='...',
+    )
+
+
+    class CachedLLMWrapper:
+        def __init__(self, llm, llm_name=''):
+            self.llm = llm
+            cached_methods = ['chat', 'achat', '_chat', 'complete', 'acomplete']
+            for method in cached_methods:
+                if hasattr(self, method):
+                    setattr(self, method, joblib.Memory(f'./cachedir/{llm_name}', verbose=0).cache(getattr(llm, method)))
+
+        def __getattr__(self, name):
+            return getattr(self.llm, name)
+
+    if use_cache:
+        for llm_name, llm in llms.items():
+            llms[llm_name] = CachedLLMWrapper(llm, llm_name)
+            # object.__setattr__(llm, 'chat', joblib.Memory(f'./cachedir/', verbose=0).cache(llm.chat))
+            # llm.complete('give me a random number')
+
+    return llms
+
+
+def get_llm():
+    llms = get_llms()
+    llm = llms['gpt4-0125-preview']
+    llm.complete('hi')
 
     return llm
