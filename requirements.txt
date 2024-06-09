@@ -38,3 +38,4 @@ seaborn
 statsmodels
 tonic_validate
 tonic_validate
+scikit-learn
