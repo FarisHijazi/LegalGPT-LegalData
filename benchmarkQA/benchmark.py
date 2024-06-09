@@ -46,7 +46,7 @@ cohere_api_key = os.getenv('COHERE_API_KEY')
 parser = argparse.ArgumentParser(description='Description of your program', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--collection_name', type=str, default='ai_arxiv', help='Vectore DB collection name')
 parser.add_argument(
-    '--benchmark', '-b', type=str, default='../experiments/NajizFAQ/Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file'
+    '--benchmark', '-b', type=str, default='../data/experiments/NajizFAQ/Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file'
 )
 parser.add_argument('--interactive', '-i', action='store_true', help='Enable interactive mode')
 parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
