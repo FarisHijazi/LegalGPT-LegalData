@@ -50,7 +50,7 @@ parser.add_argument(
 )
 parser.add_argument('--interactive', '-i', action='store_true', help='Enable interactive mode')
 parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
-parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_faris.yaml', help='Path to the config file')
+parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_final.yaml', help='Path to the config file')
 parser.add_argument('--runs_per_exp', '-r', type=int, default=10, help='Number of runs per experiment')
 parser.add_argument('--benchmark_limit', '-l', type=int, default=None, help='Limit of benchmark questions')
 parser.add_argument('--question_parallelism', '-p', type=int, default=5, help='Concurrency')
@@ -191,8 +191,8 @@ for llm_name, results in zip(llms.keys(), results_list):
 
 results = [item for sublist in results_list for item in sublist]
 
-# join where left key is question_i and right key is index
-results_df = pd.DataFrame(results).join(benchmark_df, on='question_i', rsuffix='_r')
+# join where left key is question_i and right key is index and make sure to duplicate missing values
+results_df = pd.DataFrame(results).join(benchmark_df, on='question_i', rsuffix='_r', how='outer')
 
 results_df['Experiment'] = results_df['llm'] + ' | ' + results_df['context'].apply(lambda x: 'with Context' if x else 'w/o Context')
 df_outpath = os.path.join(args.outpath, 'results.csv')

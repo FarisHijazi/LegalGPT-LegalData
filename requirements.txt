@@ -1,8 +1,8 @@
 chromadb
 cohere
 datasets
+dspy-ai==2.4.9
 easydict
-jupyter
 jupyter
 llama-index==0.10.35
 llama-index-agent-openai==0.2.4
@@ -34,8 +34,7 @@ pandas
 pyparsing
 python-dotenv
 pyyaml
+scikit-learn
 seaborn
 statsmodels
 tonic_validate
-tonic_validate
-scikit-learn

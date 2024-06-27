@@ -1,0 +1,23 @@
+models:
+  gpt4-0125-preview:
+    class: llama_index.llms.openai.OpenAI
+    params:
+      engine: gpt4-0125-preview
+      api_key: sk-
+  gpt-4o:
+    class: llama_index.llms.openai.OpenAI
+    params:
+      engine: gpt-4o
+      api_key: sk-
+  # claude-3-opus-20240229:
+  #   class: llama_index.llms.anthropic.Anthropic
+  #   params:
+  #     model: claude-3-opus-20240229
+  #     api_key: sk-ant-api03-
+arLegalBench:
+  techniques:
+    few-shot: prompts/few_shot.txt
+    Zero-shot: prompts/Zero_shot.txt
+    One-shot: prompts/One_shot.txt
+    Zero_shot_detailed: prompts/Zero_shot_detailed.txt
+  dataset_file: ./tasks/contract_qa_test_translated_final.json

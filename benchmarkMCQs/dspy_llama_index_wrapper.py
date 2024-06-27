@@ -13,7 +13,7 @@ llama-index-llms-openai==0.1.18
 """
 import json
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from easydict import EasyDict
 from llama_index.core.base.llms.types import ChatMessage
@@ -27,42 +27,32 @@ def LlamaIndexOpenAIClientWrapper(llm: LLM):
     def complete(prompt: str, **kwargs) -> Any:
         return llm.complete(prompt, **kwargs)
 
-    client = EasyDict({
-        "chat": EasyDict({
-            "completions": EasyDict({
-                "create": chat
-            })
-        }),
-        "completion": EasyDict({
-            "create": complete
-        }),
-        "ChatCompletion": EasyDict({
-            "create": chat
-        }),
-        "Completion": EasyDict({
-            "create": complete
-        }),
-    })
+    client = EasyDict(
+        {
+            'chat': EasyDict({'completions': EasyDict({'create': chat})}),
+            'completion': EasyDict({'create': complete}),
+            'ChatCompletion': EasyDict({'create': chat}),
+            'Completion': EasyDict({'create': complete}),
+        }
+    )
     return client
-    
 
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(message)s",
-    handlers=[logging.FileHandler("azure_openai_usage.log")],
+    format='%(message)s',
+    handlers=[logging.FileHandler('azure_openai_usage.log')],
 )
 
 import functools
 import json
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal
 
 import backoff
 import dsp
 import openai
-from dsp.modules.cache_utils import (CacheMemory, NotebookCacheMemory,
-                                     cache_turn_on)
+from dsp.modules.cache_utils import CacheMemory, NotebookCacheMemory, cache_turn_on
 from dsp.modules.lm import LM
 
 try:
@@ -84,13 +74,10 @@ except Exception:
     OpenAIObject = dict
 
 
-
 def backoff_hdlr(details):
     """Handler from https://pypi.org/project/backoff/"""
     print(
-        "Backing off {wait:0.1f} seconds after {tries} tries "
-        "calling function {target} with kwargs "
-        "{kwargs}".format(**details),
+        'Backing off {wait:0.1f} seconds after {tries} tries ' 'calling function {target} with kwargs ' '{kwargs}'.format(**details),
     )
 
 
@@ -109,11 +96,11 @@ class DspyLlamaIndexWrapper(LM):
     def __init__(
         self,
         llm: LLM,
-        model_type: Literal["chat", "text"] = "chat",
+        model_type: Literal['chat', 'text'] = 'chat',
         **kwargs,
     ):
         super().__init__(llm.model)
-        self.provider = "openai"
+        self.provider = 'openai'
 
         self.llm = llm
         self.client = LlamaIndexOpenAIClientWrapper(llm)
@@ -128,16 +115,16 @@ class DspyLlamaIndexWrapper(LM):
         #     if "api_version" in kwargs:
         #         del kwargs["api_version"]
 
-        if "model" not in kwargs:
-            kwargs["model"] = model
+        if 'model' not in kwargs:
+            kwargs['model'] = model
 
         self.kwargs = {
-            "temperature": 0.0,
-            "max_tokens": 150,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "n": 1,
+            'temperature': 0.0,
+            'max_tokens': 150,
+            'top_p': 1,
+            'frequency_penalty': 0,
+            'presence_penalty': 0,
+            'n': 1,
             **kwargs,
         }  # TODO: add kwargs above for </s>
 
@@ -151,19 +138,19 @@ class DspyLlamaIndexWrapper(LM):
 
     def log_usage(self, response):
         """Log the total tokens from the Azure OpenAI API response."""
-        usage_data = response.get("usage")
+        usage_data = response.get('usage')
         if usage_data:
-            total_tokens = usage_data.get("total_tokens")
-            logging.info(f"{total_tokens}")
+            total_tokens = usage_data.get('total_tokens')
+            logging.info(f'{total_tokens}')
 
     def basic_request(self, prompt: str, **kwargs):
         raw_kwargs = kwargs
 
         kwargs = {**self.kwargs, **kwargs}
-        if self.model_type == "chat":
+        if self.model_type == 'chat':
             # caching mechanism requires hashable kwargs
-            kwargs["messages"] = [{"role": "user", "content": prompt}]
-            kwargs = {"stringify_request": json.dumps(kwargs)}
+            kwargs['messages'] = [{'role': 'user', 'content': prompt}]
+            kwargs = {'stringify_request': json.dumps(kwargs)}
             # response = chat_request(self.client, **kwargs)
             # if OPENAI_LEGACY:
             #     return _cached_gpt3_turbo_request_v2_wrapped(**kwargs)
@@ -171,14 +158,14 @@ class DspyLlamaIndexWrapper(LM):
             return v1_chat_request(self.client, **kwargs)
 
         else:
-            kwargs["prompt"] = prompt
+            kwargs['prompt'] = prompt
             response = self.completions_request(**kwargs)
 
         history = {
-            "prompt": prompt,
-            "response": response,
-            "kwargs": kwargs,
-            "raw_kwargs": raw_kwargs,
+            'prompt': prompt,
+            'response': response,
+            'kwargs': kwargs,
+            'raw_kwargs': raw_kwargs,
         }
         self.history.append(history)
 
@@ -192,15 +179,15 @@ class DspyLlamaIndexWrapper(LM):
     )
     def request(self, prompt: str, **kwargs):
         """Handles retrieval of GPT-3 completions whilst handling rate limiting and caching."""
-        if "model_type" in kwargs:
-            del kwargs["model_type"]
+        if 'model_type' in kwargs:
+            del kwargs['model_type']
 
         return self.basic_request(prompt, **kwargs)
 
     def _get_choice_text(self, choice: dict[str, Any]) -> str:
-        if self.model_type == "chat":
-            return choice["message"]["content"]
-        return choice["text"]
+        if self.model_type == 'chat':
+            return choice['message']['content']
+        return choice['text']
 
     def __call__(
         self,
@@ -220,8 +207,8 @@ class DspyLlamaIndexWrapper(LM):
             list[dict[str, Any]]: list of completion choices
         """
 
-        assert only_completed, "for now"
-        assert return_sorted is False, "for now"
+        assert only_completed, 'for now'
+        assert return_sorted is False, 'for now'
 
         response = self.request(prompt, **kwargs)
 
@@ -231,25 +218,25 @@ class DspyLlamaIndexWrapper(LM):
         except Exception:
             pass
 
-        choices = response["choices"]
+        choices = response['choices']
 
-        completed_choices = [c for c in choices if c["finish_reason"] != "length"]
+        completed_choices = [c for c in choices if c['finish_reason'] != 'length']
 
         if only_completed and len(completed_choices):
             choices = completed_choices
 
         completions = [self._get_choice_text(c) for c in choices]
-        if return_sorted and kwargs.get("n", 1) > 1:
+        if return_sorted and kwargs.get('n', 1) > 1:
             scored_completions = []
 
             for c in choices:
                 tokens, logprobs = (
-                    c["logprobs"]["tokens"],
-                    c["logprobs"]["token_logprobs"],
+                    c['logprobs']['tokens'],
+                    c['logprobs']['token_logprobs'],
                 )
 
-                if "<|endoftext|>" in tokens:
-                    index = tokens.index("<|endoftext|>") + 1
+                if '<|endoftext|>' in tokens:
+                    index = tokens.index('<|endoftext|>') + 1
                     tokens, logprobs = tokens[:index], logprobs[:index]
 
                 avglog = sum(logprobs) / len(logprobs)
@@ -272,18 +259,17 @@ def v1_chat_request(client, **kwargs):
     def v1_cached_gpt3_turbo_request_v2_wrapped(**kwargs):
         @CacheMemory.cache
         def v1_cached_gpt3_turbo_request_v2(**kwargs):
-            if "stringify_request" in kwargs:
-                kwargs = json.loads(kwargs["stringify_request"])
+            if 'stringify_request' in kwargs:
+                kwargs = json.loads(kwargs['stringify_request'])
             return client.chat.completions.create(**kwargs)
 
         return v1_cached_gpt3_turbo_request_v2(**kwargs)
 
     response = v1_cached_gpt3_turbo_request_v2_wrapped(**kwargs)
-    
+
     try:
         response = response.model_dump()
-    except Exception as e:
-        print('e', e)
+    except Exception:
         response = response.raw
         response['choices'] = [json.loads(x.json()) for x in response['choices']]
         response['usage'] = json.loads(response['usage'].json())
@@ -303,35 +289,32 @@ def v1_completions_request(client, **kwargs):
     return v1_cached_gpt3_request_v2_wrapped(**kwargs).model_dump()
 
 
-
 ## ======== test =========
 
-if __name__ == "__main__":
-    print("Testing DspyLlamaIndexWrapper")
+if __name__ == '__main__':
+    print('Testing DspyLlamaIndexWrapper')
     import os
 
     import dspy
     from dspy.datasets.gsm8k import GSM8K, gsm8k_metric
     from llama_index.llms.openai import OpenAI
 
-    llm = OpenAI(api_key=os.environ['OPENAI_API_KEY'], model="gpt-3.5-turbo")
+    llm = OpenAI(api_key=os.environ['OPENAI_API_KEY'], model='gpt-3.5-turbo')
     dspy_llm = DspyLlamaIndexWrapper(llm)
 
     # Load math questions from the GSM8K dataset.
     gsm8k = GSM8K()
     gsm8k_trainset, gsm8k_devset = gsm8k.train[:10], gsm8k.dev[:10]
-    
+
     class CoT(dspy.Module):
         def __init__(self):
             super().__init__()
-            self.prog = dspy.ChainOfThought("question -> answer")
-        
+            self.prog = dspy.ChainOfThought('question -> answer')
+
         def forward(self, question):
-            print(f"{question=}")
             response = self.prog(question=question)
-            print(f"{response=}")
             return response
-    
+
     ##
 
     dspy.settings.configure(lm=dspy_llm)
@@ -344,4 +327,4 @@ if __name__ == "__main__":
     # Optimize! Use the `gsm8k_metric` here. In general, the metric is going to tell the optimizer how well it's doing.
     teleprompter = BootstrapFewShot(metric=gsm8k_metric, **config)
     optimized_cot = teleprompter.compile(CoT(), trainset=gsm8k_trainset)
-    print(f"{optimized_cot=}")
+    print(f'{optimized_cot=}')
