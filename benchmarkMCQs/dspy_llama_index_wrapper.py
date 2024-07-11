@@ -31,6 +31,7 @@ def LlamaIndexOpenAIClientWrapper(llm: LLM):
         {
             'chat': EasyDict({'completions': EasyDict({'create': chat})}),
             'completion': EasyDict({'create': complete}),
+            'completions': EasyDict({'create': complete}),
             'ChatCompletion': EasyDict({'create': chat}),
             'Completion': EasyDict({'create': complete}),
         }
@@ -185,8 +186,8 @@ class DspyLlamaIndexWrapper(LM):
         return self.basic_request(prompt, **kwargs)
 
     def _get_choice_text(self, choice: dict[str, Any]) -> str:
-        if self.model_type == 'chat':
-            return choice['message']['content']
+        # if self.model_type == 'chat':
+        #     return choice['message']['content']
         return choice['text']
 
     def __call__(
