@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from easydict import EasyDict
 from tqdm.auto import tqdm
 import random
+from easydict import EasyDict
 
 import utils
 
@@ -56,10 +57,55 @@ parser.add_argument('--benchmark_limit', '-l', type=int, default=None, help='Lim
 parser.add_argument('--question_parallelism', '-p', type=int, default=5, help='Concurrency')
 parser.add_argument('--model_parallelism', type=int, default=None, help='Concurrency')
 parser.add_argument('--llm_cache', action='store_true', help='Use LLM cache')
+parser.add_argument('--judge_llms', nargs='+', default=['gpt4-0125-preview'], help='List of judge LLMs')
 args = parser.parse_args()
 
 datetime_stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
+
+def config2llm(model_config):
+    import importlib
+
+    # Extracting the class path and parameters from the JSON
+    # Splitting the class path to import the module and get the class
+    if '.' not in model_config['class']:
+        raise ValueError('Class path should be module_name.class_name')
+
+    from copy import deepcopy
+
+    params = deepcopy(model_config['params'])
+    if 'query_wrapper_prompt' in model_config['params']:
+        from llama_index.core import PromptTemplate
+
+        params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
+
+    def messages_to_prompt(messages):
+        sep = model_config['params']['messages_to_prompt']['separator']
+        footer = model_config['params']['messages_to_prompt']['footer']
+
+        return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=x) for x in messages]) + footer
+
+    if model_config['params'] is not None:
+        params['messages_to_prompt'] = messages_to_prompt
+
+    if 'completion_to_prompt' in model_config['params']:
+        params['completion_to_prompt'] = lambda x: model_config['params']['query_wrapper_prompt'].format(query_str=x)
+
+    module_name, class_name = model_config['class'].rsplit('.', 1)
+
+    module = importlib.import_module(module_name)
+    Class = getattr(module, class_name)
+    return Class(**params)
+
+
+llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
+llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
+
+
+# Update the args object with the values from the dictionary
+for key, value in llm_config['QA'].items():
+    print('Overriding', key, 'with', value)
+    setattr(args, key, value)
 
 # get base filename without extension
 exp_name = os.path.splitext(os.path.basename(args.config_path))[0]
@@ -94,16 +140,17 @@ if args.benchmark_limit is not None:
 
 tonic_benchmark = tonic_validate.classes.benchmark.Benchmark(list(benchmark_df['questions']), list(benchmark_df['ground_truths']), 'ARAGOG')
 
-llms = utils.get_llms(use_cache=args.llm_cache, benchmark=tonic_benchmark)
+llms = utils.get_llms(llms, use_cache=args.llm_cache, benchmark=tonic_benchmark)
 # del llms['claude-3-opus-20240229']
 
 # benchmark = json.loads(open('eval_questions/benchmark.json', 'r').read())
 
 
-judge_llms = [
-    llms['gpt4-0125-preview'],
-    # llms['claude-3-opus-20240229'],
-]
+# judge_llms = [llms[judge_llm_name] for judge_llm_name in args.judge_llms]
+
+from llama_index.llms.openai import OpenAI
+
+judge_llms = [OpenAI(engine='gpt4-0125-preview', api_key='***REMOVED***')]
 
 
 config['llms'] = list(sorted(list(llms.keys())))
@@ -131,7 +178,7 @@ def benchmark_llm(i_llm_name_llm, with_context=True):
         llm_answer = run_question(llm, question, context)
         # print('llm_answer', llm_answer)
 
-        retries = 5
+        retries = 10
         for retry in range(retries):
             try:
                 # randomly pick each time

@@ -2,8 +2,6 @@ import time
 from multiprocessing.pool import ThreadPool
 import pandas as pd
 from tqdm.auto import tqdm
-from llama_index.llms.openai import OpenAI
-import yaml
 from typing import Any
 import joblib
 
@@ -213,32 +211,9 @@ def get_embed_model():
     return embed_model
 
 
-def config2llm(model_config):
-    import importlib
-
-    # Extracting the class path and parameters from the JSON
-    # Splitting the class path to import the module and get the class
-    if '.' not in model_config['class']:
-        raise ValueError('Class path should be module_name.class_name')
-
-    module_name, class_name = model_config['class'].rsplit('.', 1)
-
-    # Importing the module
-    module = importlib.import_module(module_name)
-
-    # Getting the class from the module
-    Class = getattr(module, class_name)
-
-    # Creating an instance of the class with the parameters
-    return Class(**model_config['params'])
-
-
-def get_llms(use_cache=False, benchmark=None):
-    llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
-    llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
-
-    if benchmark is not None:
-        llms['GroundTruthLLM'] = GroundTruthFakeLLM(benchmark=benchmark)
+def get_llms(llms, use_cache=False, benchmark=None):
+    # if benchmark is not None:
+    #     llms['GroundTruthLLM'] = GroundTruthFakeLLM(benchmark=benchmark)
 
     class CachedLLMWrapper:
         def __init__(self, llm, llm_name=''):

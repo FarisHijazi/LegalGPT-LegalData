@@ -1,3 +1,4 @@
+# os.environ['DSP_CACHEBOOL'] = 'false'
 import re
 
 import dspy
@@ -5,15 +6,35 @@ import pandas as pd
 import yaml
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
+import datetime
 
 
 def config2llm(model_config):
+    from llama_index.core import PromptTemplate
     import importlib
 
     # Extracting the class path and parameters from the JSON
     # Splitting the class path to import the module and get the class
     if '.' not in model_config['class']:
         raise ValueError('Class path should be module_name.class_name')
+
+    from copy import deepcopy
+
+    params = deepcopy(model_config['params'])
+    if 'query_wrapper_prompt' in model_config['params']:
+        params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
+
+    def messages_to_prompt(messages):
+        sep = model_config['params']['messages_to_prompt']['separator']
+        footer = model_config['params']['messages_to_prompt']['footer']
+
+        return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=x) for x in messages]) + footer
+
+    if 'messages_to_prompt' in model_config['params']:
+        params['messages_to_prompt'] = messages_to_prompt
+
+    if 'completion_to_prompt' in model_config['params']:
+        params['completion_to_prompt'] = lambda x: model_config['params']['query_wrapper_prompt'].format(query_str=x)
 
     module_name, class_name = model_config['class'].rsplit('.', 1)
 
@@ -24,7 +45,7 @@ def config2llm(model_config):
     Class = getattr(module, class_name)
 
     # Creating an instance of the class with the parameters
-    return Class(**model_config['params'])
+    return Class(**params)
 
 
 # Define a Signature
@@ -118,13 +139,13 @@ def prepare_data_ar(data: pd.DataFrame) -> tuple[list[str], list[str], list[list
         subject = subject_ar[row['Subject']]
         level = '' if pd.isna(row['Level']) else ' ' + level_ar[row['Level']]
         country = '' if pd.isna(row['Country']) else ' ' + country_ar[row['Country']]
-        main_meta_data = f"{subject}{level}{country}"
+        main_meta_data = f'{subject}{level}{country}'
         question = row['Question'] if pd.isna(row['Context']) else f"{row['Context']}\n\n{row['Question']}"
         options = []
         for i, opt in enumerate(option_list):
             if pd.isna(row[opt]):
                 break
-            options.append(f"{alpa[i]} {row[opt]}")
+            options.append(f'{alpa[i]} {row[opt]}')
         inputs.append(PROMPT.replace('[MAIN_META_DATA]', main_meta_data).replace('[INPUT]', question).replace('[OPTION]', '\n'.join(options)))
         outputs.append(row['Answer Key'].lower() + '.')
         outputs_options.append(options)
@@ -167,7 +188,7 @@ def prepare_data_mcq(data: pd.DataFrame, context: bool = False) -> tuple[list[st
         for i, opt in enumerate(option_list):
             if pd.isna(row[opt]):
                 break
-            options.append(f"{alpa[i]} {row[opt]}")
+            options.append(f'{alpa[i]} {row[opt]}')
         inputs.append(PROMPT.replace('[CONTEXT]', context).replace('[INPUT]', question).replace('[OPTION]', '\n'.join(options)))
         outputs.append(alpa_en[row['Answer Key']].lower())
         outputs_options.append(options)
@@ -244,7 +265,7 @@ def em_metric(correct_answer: dspy.Example, predicted_answer: dspy.Example, trac
         return 0
 
 
-def dspy_eval(dataset: list[dspy.Example], fewshot: bool, prompting: str, filename: str, num_threads: int) -> None:
+def dspy_eval(dataset: list[dspy.Example], fewshot: bool, prompting: str, filename: str, num_threads: int, model_name=None) -> None:
     """
     Evaluate the model using optimized prompt.
     Arguments:
@@ -261,7 +282,11 @@ def dspy_eval(dataset: list[dspy.Example], fewshot: bool, prompting: str, filena
     """
     if prompting is not None:
         optimized_program = MCQ(prompting=prompting)
-        state = yaml.safe_load(open(f'{filename}.yaml', 'r', encoding='utf8'))
+        try:
+            state = yaml.safe_load(open(f'{filename}.yaml', 'r', encoding='utf8'))
+        except FileNotFoundError:
+            gpt4_filename = filename.replace(model_name, 'Llama3-8B')
+            state = yaml.safe_load(open(f'{gpt4_filename}.yaml', 'r', encoding='utf8'))
 
         optimized_program.load_state(state)
     evaluate = Evaluate(devset=dataset, metric=em_metric, display_progress=True, display_table=0, num_threads=num_threads)
@@ -305,13 +330,13 @@ def print_result(dataset: list[dspy.Example], fewshot: bool, prompting: str, mod
     # evaluate the optimized program
     if data_name == 'ArabicMMLU':
         print(f'Law Subject Evaluation'.center(100, '-'))
-        law_results = dspy_eval(dataset[:299], fewshot, prompting, filename, num_threads)
+        law_results = dspy_eval(dataset[:299], fewshot, prompting, filename, num_threads, model_name=model_name)
         print(f'Political Science Subject Evaluation'.center(100, '-'))
-        political_science_results = dspy_eval(dataset[299:], fewshot, prompting, filename, num_threads)
+        political_science_results = dspy_eval(dataset[299:], fewshot, prompting, filename, num_threads, model_name=model_name)
         return {'Law': law_results, 'Political Science': political_science_results}
     else:
         print(f'Generated MCQ Evaluation'.center(100, '-'))
-        results = dspy_eval(dataset, fewshot, prompting, filename, num_threads)
+        results = dspy_eval(dataset, fewshot, prompting, filename, num_threads, model_name=model_name)
         return {'All': results}
 
 
@@ -369,7 +394,7 @@ def mcq_sample(df: pd.DataFrame, frac=None, random_state: int = 1, engine=None) 
     return df
 
 
-def evaluate(dspy_models, dataset_path=None, frac=None) -> None:
+def evaluate(dspy_models, dataset_path=None, frac: float = None, limit: int = None) -> None:
     """
     Evaluate the models on given data.
     Arguments:
@@ -395,6 +420,9 @@ def evaluate(dspy_models, dataset_path=None, frac=None) -> None:
             else:
                 sample = mcq_sample(dataset, frac=frac)
 
+            if sample is not None:
+                sample = sample[:limit]
+
             results = {}
             print(f'{name}'.center(100, '='))
             print(f'Original Prompting'.center(100, '.'))
@@ -413,15 +441,33 @@ def evaluate(dspy_models, dataset_path=None, frac=None) -> None:
             # model.inspect_history(n=10)
             print(f'=' * 100, '\n\n')
             llm_results[name] = results
+
+    # from multiprocessing.pool import ThreadPool
+    # results = []
+    # # iterate over the models
+    # for llm_name, model in dspy_models.items():
+    #     results.append(evaluate_llm(llm_name, model))
+
+    # from tqdm.auto import tqdm
+    # results = list(tqdm(
+    #     ThreadPool().imap(
+    #         lambda x: evaluate_llm_(*x),
+    #         dspy_models.items(),
+    #     ),
+    #     desc='Models', total=len(dspy_models), leave=False
+    # ))
+    # llm_results = dict(results)
+
     return llm_results
 
 
 # Run the evaluation
 
 if __name__ == '__main__':
-    dataset_path = 'All_Generated_MCQs_Evaluated_Shuffled.csv'
-    frac = 0.01
-    # Load configuration
+    # dataset_path = 'All_Generated_MCQs_Evaluated_Shuffled.csv'
+    # frac = 0.01
+
+    # # Load configuration
     llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
     llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
 
@@ -430,9 +476,7 @@ if __name__ == '__main__':
     dspy_models = {model_name: DspyLlamaIndexWrapper(llm) for model_name, llm in llms.items()}
 
     # Run the evaluation
-    llm_results = evaluate(dspy_models, dataset_path, frac=frac)
-    import datetime
-
+    llm_results = evaluate(dspy_models, **llm_config['MCQs'])
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
     def my_representer(dumper, data):

@@ -19,12 +19,31 @@ os.makedirs('experiment_results', exist_ok=True)
 
 
 def config2llm(model_config):
+    from llama_index.core import PromptTemplate
     import importlib
 
     # Extracting the class path and parameters from the JSON
     # Splitting the class path to import the module and get the class
     if '.' not in model_config['class']:
         raise ValueError('Class path should be module_name.class_name')
+
+    from copy import deepcopy
+
+    params = deepcopy(model_config['params'])
+    if 'query_wrapper_prompt' in model_config['params']:
+        params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
+
+    def messages_to_prompt(messages):
+        sep = model_config['params']['messages_to_prompt']['separator']
+        footer = model_config['params']['messages_to_prompt']['footer']
+
+        return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=x) for x in messages]) + footer
+
+    if 'messages_to_prompt' in model_config['params']:
+        params['messages_to_prompt'] = messages_to_prompt
+
+    if 'completion_to_prompt' in model_config['params']:
+        params['completion_to_prompt'] = lambda x: model_config['params']['query_wrapper_prompt'].format(query_str=x)
 
     module_name, class_name = model_config['class'].rsplit('.', 1)
 
@@ -35,10 +54,10 @@ def config2llm(model_config):
     Class = getattr(module, class_name)
 
     # Creating an instance of the class with the parameters
-    return Class(**model_config['params'])
+    return Class(**params)
 
 
-def load_datasets(file_path, sample_size=8):
+def load_dataset(file_path):
     if not os.path.exists(file_path):
         raise Exception(f'Dataset file does not exist: {file_path}')
     if os.path.getsize(file_path) == 0:
@@ -59,10 +78,6 @@ def load_datasets(file_path, sample_size=8):
             }
             processed_data.append(entry)
 
-        # Get a sample of the data
-        if len(processed_data) > sample_size:
-            processed_data = random.sample(processed_data, sample_size)
-
         return processed_data
 
 
@@ -72,55 +87,76 @@ def load_prompt(file_path):
 
 
 def generate_experiment_id(model_name, technique_name, prompt):
-    content = f'{model_name}_{technique_name}_{prompt}'
-    return hashlib.md5(content.encode()).hexdigest()
+    """
+    generate a filename based on the model, technique, and prompt
+    let's say we have model_name=GPT4 and technique_name=technique1 and prompt="prompt1....."
+    only the prompt is hashed and we want just part of the hash
+    """
+    # Hash the prompt
+    prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:6]
+    return f'{model_name}_{technique_name}_{prompt_hash}'
 
 
-def run_benchmark():
+def run_benchmarks():
     # Load configuration
     llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
     llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
 
-    techniques = llm_config['arLegalBench']['techniques']
-    dataset_file = llm_config['arLegalBench']['dataset_file']
-    datasets = load_datasets(dataset_file)
+    import glob
+    from pathlib import Path
 
-    # Shuffle the dataset
-    random.shuffle(datasets)
+    dataset_files = [
+        './tasks/consumer_contract/test/',
+        './tasks/contract_qa/test/',
+        './tasks/privacy_policy_entailment/test/',
+        './tasks/privacy_policy_qa/test/',
+    ]
+    dataset_files = [f for path in dataset_files for f in glob.glob(path + '*.json')]
+    task_names = [Path(f).parent.parent.stem for f in dataset_files]
+    datasets = {Path(f).parent.parent.stem: load_dataset(f) for f in dataset_files}
 
-    for model_name, model in tqdm(llms.items(), desc='Models', total=len(llms), leave=False):
+    for task_name in datasets:
+        # logger.info(f'Loaded {len(dataset)} entries for task {task_name}')
+        if llm_config['ArLegalBench'].get('sample_size') is not None:
+            if llm_config['ArLegalBench'].get('sample_size') < len(datasets[task_name]):
+                # logger.info(f'Sampling {llm_config["ArLegalBench"].get("sample_size")} entries for task {task_name}')
+                datasets[task_name] = random.sample(datasets[task_name], llm_config['ArLegalBench'].get('sample_size'))
+
+    # benchmarkArLegalBench/prompts/consumer_contract/Fewshots.txt
+    task2techniques = {task_name: {Path(f).parent.stem: f for f in glob.glob(f'./prompts/{task_name}/*.txt')} for task_name in task_names}
+    # list of datasetfiles, datasets, tasknames, techniques:
+
+    # dataset_file = llm_config['ArLegalBench']['dataset_file']
+
+    def process_run(task_name, dataset, llm_name, llm, techniques):
+        # Shuffle the dataset
+        random.shuffle(dataset)
         for technique_name, prompt_file in tqdm(techniques.items(), desc='Techniques', leave=False):
             prompt_template = load_prompt(prompt_file)
-            experiment_id = generate_experiment_id(model_name, technique_name, prompt_template)
+            experiment_id = generate_experiment_id(llm_name, technique_name, prompt_template)
             experiment_dir = os.path.join('experiment_results', experiment_id)
-            os.makedirs(experiment_dir, exist_ok=True)
 
             experiment_results = []
-            metadata = {
-                'model': model_name,
-                'technique': technique_name,
-                'prompt': prompt_template,
-                'dataset': dataset_file,
-                'F1 score': 0,
-                'Precision': 0,
-                'Recall': 0,
-                'Accuracy': 0,
-                'Balanced Accuracy': 0,
-                'Number of contracts': len(datasets),
-            }
 
             all_true_labels = []
             all_predictions = []
 
-            for dataset_entry in tqdm(datasets, desc='Dataset Entries', leave=False):
+            for dataset_entry in tqdm(dataset, desc='Dataset Entries', leave=False):
+                # Save results and metadata in JSON
+                result_file_path = os.path.join(experiment_dir, f'{experiment_id}_result.json')
+                metadata_path = os.path.join(experiment_dir, f'{experiment_id}_metadata.json')
+                if os.path.exists(result_file_path) and os.path.exists(metadata_path):
+                    logger.info(f'Experiment {experiment_id} already exists. Skipping...')
+                    continue
+
                 # Replace placeholders with actual context and Question
                 prompt = prompt_template.replace('{contract}', dataset_entry['contract']).replace('{Question}', dataset_entry['Question'])
 
                 # Log the full prompt for debugging
-                logger.info(f'Full prompt: {prompt}')
+                # logger.info(f'Full prompt: {prompt}')
 
                 # Call the model's prediction method
-                response = model.complete(prompt)
+                response = llm.complete(prompt)
 
                 # Extract the text from the response object
                 if hasattr(response, 'text'):
@@ -153,15 +189,19 @@ def run_benchmark():
             accuracy = accuracy_score(all_true_labels, all_predictions)
             balanced_accuracy = balanced_accuracy_score(all_true_labels, all_predictions)
 
-            metadata['F1 score'] = f1
-            metadata['Precision'] = precision
-            metadata['Recall'] = recall
-            metadata['Accuracy'] = accuracy
-            metadata['Balanced Accuracy'] = balanced_accuracy
-
-            # Save results and metadata in JSON
-            result_file_path = os.path.join(experiment_dir, f'{experiment_id}_result.json')
-            metadata_path = os.path.join(experiment_dir, f'{experiment_id}_metadata.json')
+            metadata = {
+                'model': llm_name,
+                'technique': technique_name,
+                'prompt': prompt_template,
+                'dataset': task_name,
+                'F1 score': f1,
+                'Precision': precision,
+                'Recall': recall,
+                'Accuracy': accuracy,
+                'Balanced Accuracy': balanced_accuracy,
+                'Number of contracts': len(dataset),
+            }
+            os.makedirs(experiment_dir, exist_ok=True)
 
             with open(result_file_path, 'w', encoding='utf-8') as file:
                 json.dump(experiment_results, file, ensure_ascii=False, indent=4)
@@ -171,6 +211,18 @@ def run_benchmark():
 
             logger.info(f'Experiment {experiment_id} results saved.')
 
+    experiments = [
+        (task_name, datasets[task_name], llm_name, llm, techniques)
+        for task_name, techniques in task2techniques.items()
+        for llm_name, llm in llms.items()
+    ]
+    from multiprocess.pool import ThreadPool
+
+    # for task_name, dataset, llm_name, llm, techniques in tqdm(experiments, desc='Models', total=len(llms), leave=False):
+    #     process_run(task_name, dataset, llm_name, llm, techniques)
+
+    list(tqdm(ThreadPool().imap(lambda x: process_run(*x), experiments), desc='Models', total=len(experiments), leave=False))
+
 
 if __name__ == '__main__':
-    run_benchmark()
+    run_benchmarks()
