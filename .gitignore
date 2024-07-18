@@ -1,3 +1,4 @@
+*.done
 *.bak
 *.bak/
 **/cachedir/**
@@ -165,3 +166,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 benchmarkArLegalBench/experiment_results/
+data/scrapers/other/
