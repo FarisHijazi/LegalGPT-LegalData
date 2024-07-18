@@ -15,3 +15,19 @@ In this folder `data/processed/ArabLegalEval` you will find the benchmark as fol
 ---
 
 Tested with Python 3.12
+
+
+## Citing this work
+
+Please include all citations below, which credit all sources ArabLegalEval draws on.
+
+```text
+@inproceedings{
+      anonymous2024arablegaleval,
+      title={ArabLegalEval: A Multitask Benchmark for Assessing Arabic Legal Knowledge in Large Language Models},
+      author={Anonymous},
+      booktitle={The Second Arabic Natural Language Processing Conference},
+      year={2024},
+      url={https://openreview.net/forum?id=3EHYXqKKLA}
+}
+```
