@@ -11,7 +11,7 @@ TEXT_QA_TEMPLATE: |
   ---------------------
   Given the context information and not prior knowledge, answer the query.
   Query: {query_str}
-  Answer:
+  Answer: 
 TEXT_QA_NORAG_TEMPLATE: |
   You are an expert Q&A system that is trusted around the world for your factual accuracy.
   Always answer the query using the provided context information, and not prior knowledge. Ensure your answers are fact-based and accurately reflect the context provided.
@@ -22,7 +22,7 @@ TEXT_QA_NORAG_TEMPLATE: |
 
   Answer the query.
   Query: {query_str}
-  Answer:
+  Answer: 
 RETRIEVAL_PRECISION_TEMPLATE: |
   Considering the following question and context, determine whether the context is relevant for answering the question. If the context is relevant for answering the question, respond with true. If the context is not relevant for answering the question, respond with false. Respond with either true or false and no additional text.
 ANSWER_SIMILARITY_TEMPLATE: |

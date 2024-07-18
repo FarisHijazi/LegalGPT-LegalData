@@ -150,7 +150,9 @@ llms = utils.get_llms(llms, use_cache=args.llm_cache, benchmark=tonic_benchmark)
 
 from llama_index.llms.openai import OpenAI
 
-judge_llms = [OpenAI(engine='gpt4-0125-preview', api_key='***REMOVED***')]
+judge_llms = [
+    OpenAI(engine='gpt4-0125-preview', api_key=os.environ['OPENAI_API_KEY'])
+]
 
 
 config['llms'] = list(sorted(list(llms.keys())))

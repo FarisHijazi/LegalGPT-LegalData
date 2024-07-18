@@ -17,7 +17,7 @@ QA_PROMPT: |
   ---------------------
   Given the context information and not prior knowledge, answer the query in Arabic.
   Query: {query_str}
-  Answer:
+  Answer: 
 MCQ_QUESTION_DELIMITER: "####"
 
 MCQ_PROMPT: |
@@ -95,7 +95,7 @@ EVAL_TEMPLATE: |
   Answer: NO
   Information: {query_str}
   Context: {context_str}
-  Answer:
+  Answer: 
 EVAL_REFINE_TEMPLATE: |
   We want to understand if the following information is present in the context information: {query_str}
   We have provided an existing YES/NO answer: {existing_answer}
