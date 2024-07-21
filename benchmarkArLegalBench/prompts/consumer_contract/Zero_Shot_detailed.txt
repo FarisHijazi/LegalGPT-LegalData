@@ -4,4 +4,4 @@ Contract: {clause}
 
 Question: {question}
 
-Answer: 
+Answer:

@@ -4,4 +4,4 @@ You are an expert legal professional who can understand legal documents and answ
 
 clause: {clause}
 description: {question} Reply either with صحيح or غير صحيح
-Answer: 
+Answer:

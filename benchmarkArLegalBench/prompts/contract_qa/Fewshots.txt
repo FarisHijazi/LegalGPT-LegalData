@@ -1,4 +1,4 @@
-Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
+Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer.
 
 contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
 Question: هل يناقش البند انتهاكات بيانات PII؟
@@ -18,4 +18,4 @@ Answer: أجل
 
 contract: {clause}
 Question: {question}
-Answer: 
+Answer:

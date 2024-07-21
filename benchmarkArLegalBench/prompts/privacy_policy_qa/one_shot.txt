@@ -9,6 +9,6 @@ Question:ما هي المعلومات التي تخزنها الشركة عني�
 Answer: غير ذات صلة
 
 Clause: {clause}
-Question: {question} 
+Question: {question}
 
-Answer: 
+Answer:

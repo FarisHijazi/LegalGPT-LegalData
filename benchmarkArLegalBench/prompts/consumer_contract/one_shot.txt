@@ -9,6 +9,6 @@ Given a text from a contract and a related question, answer the question only wi
 
 Contract: {clause}
 
-Question: {question} 
+Question: {question}
 
-Answer: 
+Answer:

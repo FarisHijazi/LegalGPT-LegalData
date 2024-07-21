@@ -2,4 +2,4 @@ You are a great legal expert helping a consumer understand legal contracts and t
 
 contract: {clause}
 Question: {question}
-Answer: 
+Answer:

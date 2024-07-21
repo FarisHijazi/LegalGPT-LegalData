@@ -9,6 +9,11 @@ import json
 import os
 import random
 import yaml
+from llama_index.core.llms import LLM
+import glob
+from pathlib import Path
+from multiprocess.pool import ThreadPool
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -16,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 # Check and create necessary directories
 os.makedirs('experiment_results', exist_ok=True)
+
+experiment_parallelism = 50
+task_parallelism = 50
 
 
 def config2llm(model_config):
@@ -69,16 +77,16 @@ def load_dataset(file_path):
         except json.JSONDecodeError as e:
             raise Exception(f'Error decoding JSON from file {file_path}: {str(e)}')
 
-        processed_data = []
-        for item in data:
-            entry = {
-                'Question': item.get('Question_translation', ''),
-                'answer': item.get('answer_Translation', ''),
-                'contract': item.get('contract_Translation', item.get('text_Translation', '')),
-            }
-            processed_data.append(entry)
+    processed_data = [
+        {
+            'question': item['Question_translation'],
+            'answer': item['answer_Translation'],
+            'contract': item['contract_Translation'],
+        }
+        for item in data
+    ]
 
-        return processed_data
+    return processed_data
 
 
 def load_prompt(file_path):
@@ -97,13 +105,14 @@ def generate_experiment_id(model_name, technique_name, prompt):
     return f'{model_name}_{technique_name}_{prompt_hash}'
 
 
+def postprocess_prediction(prediction: str) -> str:
+    return prediction.replace('الصلة', 'صلة')
+
+
 def run_benchmarks():
     # Load configuration
     llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
     llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
-
-    import glob
-    from pathlib import Path
 
     dataset_files = [
         './tasks/consumer_contract/test/',
@@ -117,111 +126,81 @@ def run_benchmarks():
 
     for task_name in datasets:
         # logger.info(f'Loaded {len(dataset)} entries for task {task_name}')
-        if llm_config['ArLegalBench'].get('sample_size') is not None:
-            if llm_config['ArLegalBench'].get('sample_size') < len(datasets[task_name]):
-                # logger.info(f'Sampling {llm_config["ArLegalBench"].get("sample_size")} entries for task {task_name}')
-                datasets[task_name] = random.sample(datasets[task_name], llm_config['ArLegalBench'].get('sample_size'))
+        if llm_config['ArLegalBench'].get('sample_size') is not None and llm_config['ArLegalBench'].get('sample_size') < len(datasets[task_name]):
+            # logger.info(f'Sampling {llm_config["ArLegalBench"].get("sample_size")} entries for task {task_name}')
+            datasets[task_name] = random.sample(datasets[task_name], llm_config['ArLegalBench'].get('sample_size'))
 
     # benchmarkArLegalBench/prompts/consumer_contract/Fewshots.txt
     task2techniques = {task_name: {Path(f).parent.stem: f for f in glob.glob(f'./prompts/{task_name}/*.txt')} for task_name in task_names}
-    # list of datasetfiles, datasets, tasknames, techniques:
 
-    # dataset_file = llm_config['ArLegalBench']['dataset_file']
-
-    def process_run(task_name, dataset, llm_name, llm, techniques):
+    def process_run(task_name, dataset, llm_name: str, llm: LLM, technique_name: str, technique: str):
         # Shuffle the dataset
         random.shuffle(dataset)
-        for technique_name, prompt_file in tqdm(techniques.items(), desc='Techniques', leave=False):
-            prompt_template = load_prompt(prompt_file)
-            experiment_id = generate_experiment_id(llm_name, technique_name, prompt_template)
-            experiment_dir = os.path.join('experiment_results', experiment_id)
+        # for technique_name, prompt_file in tqdm(techniques.items(), desc='Techniques', leave=False):
+        prompt_template = load_prompt(technique)
+        experiment_id = generate_experiment_id(llm_name, technique_name, prompt_template)
+        experiment_dir = os.path.join('experiment_results', experiment_id)
 
-            experiment_results = []
+        # Save results and metadata in JSON
+        result_file_path = os.path.join(experiment_dir, 'results.json')
 
-            all_true_labels = []
-            all_predictions = []
+        def model_predict(dataset_entry):
+            prompt = prompt_template.format(
+                question=dataset_entry['question'],
+                clause=dataset_entry['contract'],
+            )
 
-            for dataset_entry in tqdm(dataset, desc='Dataset Entries', leave=False):
-                # Save results and metadata in JSON
-                result_file_path = os.path.join(experiment_dir, f'{experiment_id}_result.json')
-                metadata_path = os.path.join(experiment_dir, f'{experiment_id}_metadata.json')
-                if os.path.exists(result_file_path) and os.path.exists(metadata_path):
-                    logger.info(f'Experiment {experiment_id} already exists. Skipping...')
-                    continue
-
-                # Replace placeholders with actual context and Question
-                prompt = prompt_template.replace('{contract}', dataset_entry['contract']).replace('{Question}', dataset_entry['Question'])
-
-                # Log the full prompt for debugging
-                # logger.info(f'Full prompt: {prompt}')
-
-                # Call the model's prediction method
-                response = llm.complete(prompt)
-
-                # Extract the text from the response object
-                if hasattr(response, 'text'):
-                    prediction = response.text.strip()
-                elif hasattr(response, 'choices') and len(response.choices) > 0:
-                    prediction = response.choices[0].text.strip()
-                else:
-                    raise ValueError('Unexpected response format from model.complete')
-
-                logger.info(f'Prediction: {prediction}')
-
-                true_label = dataset_entry['answer']
-
-                all_predictions.append(prediction)
-                all_true_labels.append(true_label)
-
-                experiment_results.append(
-                    {
-                        'Question': dataset_entry['Question'],
-                        'contract': dataset_entry['contract'],
-                        'true_label': true_label,
-                        'predictions': prediction,
-                    }
-                )
-
-            # Calculate aggregated metrics
-            f1 = f1_score(all_true_labels, all_predictions, average='macro')
-            precision = precision_score(all_true_labels, all_predictions, average='macro')
-            recall = recall_score(all_true_labels, all_predictions, average='macro')
-            accuracy = accuracy_score(all_true_labels, all_predictions)
-            balanced_accuracy = balanced_accuracy_score(all_true_labels, all_predictions)
-
-            metadata = {
-                'model': llm_name,
-                'technique': technique_name,
-                'prompt': prompt_template,
-                'dataset': task_name,
-                'F1 score': f1,
-                'Precision': precision,
-                'Recall': recall,
-                'Accuracy': accuracy,
-                'Balanced Accuracy': balanced_accuracy,
-                'Number of contracts': len(dataset),
+            response = llm.complete(prompt)
+            prediction = postprocess_prediction(response.text.strip())
+            logger.info(f'Prediction: {prediction}')
+            return {
+                'question': dataset_entry['question'],
+                'contract': dataset_entry['contract'],
+                'true_label': dataset_entry['answer'],
+                'predictions': prediction,
             }
-            os.makedirs(experiment_dir, exist_ok=True)
 
-            with open(result_file_path, 'w', encoding='utf-8') as file:
-                json.dump(experiment_results, file, ensure_ascii=False, indent=4)
+        experiment_results = list(
+            tqdm(ThreadPool(task_parallelism).imap(model_predict, dataset), desc='Dataset Entries', total=len(dataset), leave=False),
+        )
 
-            with open(metadata_path, 'w', encoding='utf-8') as file:
-                json.dump(metadata, file, ensure_ascii=False, indent=4)
+        all_true_labels = [entry['true_label'] for entry in experiment_results]
+        all_predictions = [entry['predictions'] for entry in experiment_results]
+        # Calculate aggregated metrics
+        metadata = {
+            'model': llm_name,
+            'technique': technique_name,
+            'prompt_template': prompt_template,
+            'dataset': task_name,
+            'F1 score': f1_score(all_true_labels, all_predictions, average='macro'),
+            'Precision': precision_score(all_true_labels, all_predictions, average='macro'),
+            'Recall': recall_score(all_true_labels, all_predictions, average='macro'),
+            'Accuracy': accuracy_score(all_true_labels, all_predictions),
+            'Balanced Accuracy': balanced_accuracy_score(all_true_labels, all_predictions),
+            'Number of contracts': len(dataset),
+        }
+        os.makedirs(experiment_dir, exist_ok=True)
 
-            logger.info(f'Experiment {experiment_id} results saved.')
+        with open(result_file_path, 'w', encoding='utf-8') as file:
+            o = {
+                'responses': experiment_results,
+                'metadata': metadata,
+            }
+            json.dump(o, file, ensure_ascii=False, indent=4)
+
+        logger.info(f'Experiment results saved: "{result_file_path}"')
 
     experiments = [
-        (task_name, datasets[task_name], llm_name, llm, techniques)
+        (task_name, datasets[task_name], llm_name, llm, technique_name, technique)
         for task_name, techniques in task2techniques.items()
+        for technique_name, technique in techniques.items()
         for llm_name, llm in llms.items()
     ]
-    from multiprocess.pool import ThreadPool
+    logger.info(f'Running {len(experiments)} experiments')
 
-    # for task_name, dataset, llm_name, llm, techniques in tqdm(experiments, desc='Models', total=len(llms), leave=False):
-    #     process_run(task_name, dataset, llm_name, llm, techniques)
-
-    list(tqdm(ThreadPool().imap(lambda x: process_run(*x), experiments), desc='Models', total=len(experiments), leave=False))
+    return list(
+        tqdm(ThreadPool(experiment_parallelism).imap(lambda x: process_run(*x), experiments), desc='Models', total=len(experiments), leave=False)
+    )
 
 
 if __name__ == '__main__':

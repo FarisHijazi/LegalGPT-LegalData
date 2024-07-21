@@ -2,6 +2,6 @@ Classify if the clause is relevant ذات صلة to answering the question or ir
 
 
 Clause: {clause}
-Question: {question} 
+Question: {question}
 
-Answer: 
+Answer:
