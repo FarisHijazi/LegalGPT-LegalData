@@ -28,4 +28,4 @@ Answer: غير صحيح
 
 clause: {clause}
 description: {question} 
-Answer:
+Answer: 

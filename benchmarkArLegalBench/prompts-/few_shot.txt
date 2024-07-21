@@ -1,4 +1,4 @@
-You are a great legal expert helping a consumer understand legal contracts and terms and conditions. The consumer gives you a text from a contract and asks you a Question. Both the contract and the Question are in Arabic language. You need to analyze the contract detailes and Answer in Arabic language only with أجل for Yes or لا for No. Don't add any more details to the Answer. The final answer for the question should be based on the information in the contract:
+Given a text from a contract and a related question, answer the question with أجل for Yes or لا for No. Don't add any more details to the answer. 
 
 contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات المستقبلية.
 Question: هل يناقش البند انتهاكات بيانات PII؟
@@ -7,7 +7,7 @@ Answer: أجل
 contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
 Question: هل يتنازل الشرط عن السرية؟
 Answer: لا
-
+df
 contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في مصلحتهم.
 Question: هل يناقش البند التعويض الشخصي؟
 Answer: لا
@@ -18,4 +18,4 @@ Answer: أجل
 
 contract: {contract}
 Question: {Question}
-Answer:
+Answer: 

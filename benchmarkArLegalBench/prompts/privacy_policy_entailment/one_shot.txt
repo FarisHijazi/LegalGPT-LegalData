@@ -16,7 +16,7 @@ Answer: غير صحيح
 
 clause: {clause}
 description: {question}  Reply either with صحيح or غير صحيح
-Answer:
+Answer: 
 
 
 

@@ -2,4 +2,4 @@ Given a text from a contract and a related question, answer the question with أ
  
 contract: {clause}
 Question: {question}
- Answer:
+ Answer: 

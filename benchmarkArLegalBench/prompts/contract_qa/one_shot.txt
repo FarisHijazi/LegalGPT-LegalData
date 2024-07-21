@@ -11,4 +11,4 @@ Answer: أجل
 
 contract: {clause}
 Question: {question}
-Answer:
+Answer: 

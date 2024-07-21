@@ -3,4 +3,4 @@ Classify if the description of each clause is correct or incorrect. Use the Arab
 
 clause: {clause}
 description: {question} Reply either with صحيح or غير صحيح
-Answer:
+Answer: 
