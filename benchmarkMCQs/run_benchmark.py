@@ -1,6 +1,7 @@
-# os.environ['DSP_CACHEBOOL'] = 'false'
-import re
+import os
 
+os.environ['DSP_CACHEBOOL'] = 'false'
+import re
 import dspy
 import pandas as pd
 import yaml
@@ -394,7 +395,7 @@ def mcq_sample(df: pd.DataFrame, frac=None, random_state: int = 1, engine=None) 
     return df
 
 
-def evaluate(dspy_models, dataset_path=None, frac: float = None, limit: int = None) -> None:
+def evaluate(dspy_models, dataset_path=None, frac: float = None, sample_size: int = None) -> None:
     """
     Evaluate the models on given data.
     Arguments:
@@ -420,8 +421,8 @@ def evaluate(dspy_models, dataset_path=None, frac: float = None, limit: int = No
             else:
                 sample = mcq_sample(dataset, frac=frac)
 
-            if sample is not None:
-                sample = sample[:limit]
+            if sample is not None and sample_size is not None:
+                sample = sample[:sample_size]
 
             results = {}
             print(f'{name}'.center(100, '='))
@@ -464,9 +465,6 @@ def evaluate(dspy_models, dataset_path=None, frac: float = None, limit: int = No
 # Run the evaluation
 
 if __name__ == '__main__':
-    # dataset_path = 'All_Generated_MCQs_Evaluated_Shuffled.csv'
-    # frac = 0.01
-
     # # Load configuration
     llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
     llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}

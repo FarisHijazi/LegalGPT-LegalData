@@ -4,63 +4,19 @@ import json
 import logging
 import os
 import pprint
+import random
 import re
 import time
 from multiprocessing.pool import ThreadPool
 
-import dotenv
-import llama_index.core.instrumentation as instrument
-import openai
+# import llama_index.core.instrumentation as instrument
 import pandas as pd
 import tonic_validate
 import yaml
-from dotenv import load_dotenv
 from easydict import EasyDict
 from tqdm.auto import tqdm
-import random
-from easydict import EasyDict
 
 import utils
-
-dispatcher = instrument.get_dispatcher(__name__)
-
-openai.log = 'warning'
-
-loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-for logger in loggers:
-    logger.setLevel(logging.WARNING)
-
-
-### SETUP
-# --------------------------------------------------------------------------------------------------------------
-# Load the config file (.env vars)
-load_dotenv()
-
-# Set the OpenAI API key for authentication.
-openai.api_key = os.getenv('OPENAI_API_KEY')
-# tonic_validate_api_key = os.getenv('TONIC_VALIDATE_API_KEY')
-# tonic_validate_project_key = os.getenv('TONIC_VALIDATE_PROJECT_KEY')
-# tonic_validate_benchmark_key = os.getenv("TONIC_VALIDATE_BENCHMARK_KEY")
-cohere_api_key = os.getenv('COHERE_API_KEY')
-# validate_api = ValidateApi(tonic_validate_api_key)
-
-parser = argparse.ArgumentParser(description='Description of your program', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--collection_name', type=str, default='ai_arxiv', help='Vectore DB collection name')
-parser.add_argument(
-    '--benchmark', '-b', type=str, default='../data/experiments/NajizFAQ/Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file'
-)
-parser.add_argument('--interactive', '-i', action='store_true', help='Enable interactive mode')
-parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
-parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_final.yaml', help='Path to the config file')
-parser.add_argument('--runs_per_exp', '-r', type=int, default=10, help='Number of runs per experiment')
-parser.add_argument('--benchmark_limit', '-l', type=int, default=None, help='Limit of benchmark questions')
-parser.add_argument('--question_parallelism', '-p', type=int, default=5, help='Concurrency')
-parser.add_argument('--model_parallelism', type=int, default=None, help='Concurrency')
-parser.add_argument('--llm_cache', action='store_true', help='Use LLM cache')
-parser.add_argument('--judge_llms', nargs='+', default=['gpt4-0125-preview'], help='List of judge LLMs')
-args = parser.parse_args()
-
-datetime_stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 
 def config2llm(model_config):
@@ -98,9 +54,37 @@ def config2llm(model_config):
     return Class(**params)
 
 
+# dispatcher = instrument.get_dispatcher(__name__)
+
+# openai.log = 'warning'
+
+loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+for logger in loggers:
+    logger.setLevel(logging.WARNING)
+
+
+parser = argparse.ArgumentParser(description='Description of your program', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--dataset_path', '-b', type=str, default='./Najiz_QA_with_context_v2.benchmark.json', help='Path to the benchmark file')
+parser.add_argument('--outpath', '-o', type=str, default='outputs/{exp_name}/{datetime_stamp}', help='Output path')
+parser.add_argument('--config_path', '-c', type=str, default='resources/defaults_final.yaml', help='Path to the config file')
+parser.add_argument('--sample_size', '-l', type=int, default=None, help='Limit of benchmark questions')
+# parser.add_argument('--task_parallelism', '-p', type=int, default=5, help='Concurrency')
+# parser.add_argument('--experiment_parallelism', type=int, default=None, help='Concurrency')
+parser.add_argument('--llm_cache', action='store_true', help='Use LLM cache')
+parser.add_argument('--judge_llms', nargs='+', default=None, help='List of judge LLMs')
+args = parser.parse_args()
+
+
+datetime_stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
 llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
 llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
 
+
+# for each key in args, update the llm_config if the args value is not None
+for key, value in vars(args).items():
+    if value is not None:
+        llm_config['QA'][key] = value
 
 # Update the args object with the values from the dictionary
 for key, value in llm_config['QA'].items():
@@ -125,34 +109,21 @@ print('=================')
 ###############################################
 
 
-dotenv.load_dotenv()
-
-
 config = EasyDict(yaml.safe_load(open(args.config_path)))
 config
 
 
-benchmark_df = pd.DataFrame(json.loads(open(args.benchmark, 'r').read()))
+benchmark_df = pd.DataFrame(json.loads(open(args.dataset_path, 'r').read()))
 
 # use args.limit
-if args.benchmark_limit is not None:
-    benchmark_df = benchmark_df.sample(n=args.benchmark_limit)
+if args.sample_size is not None and args.sample_size < len(benchmark_df):
+    benchmark_df = benchmark_df.sample(n=args.sample_size)
 
 tonic_benchmark = tonic_validate.classes.benchmark.Benchmark(list(benchmark_df['questions']), list(benchmark_df['ground_truths']), 'ARAGOG')
 
 llms = utils.get_llms(llms, use_cache=args.llm_cache, benchmark=tonic_benchmark)
-# del llms['claude-3-opus-20240229']
 
-# benchmark = json.loads(open('eval_questions/benchmark.json', 'r').read())
-
-
-# judge_llms = [llms[judge_llm_name] for judge_llm_name in args.judge_llms]
-
-from llama_index.llms.openai import OpenAI
-
-judge_llms = [
-    OpenAI(engine='gpt4-0125-preview', api_key=os.environ['OPENAI_API_KEY'])
-]
+judge_llms = [llms[judge_llm_name] for judge_llm_name in args.judge_llms]
 
 
 config['llms'] = list(sorted(list(llms.keys())))
@@ -213,7 +184,7 @@ def benchmark_llm(i_llm_name_llm, with_context=True):
 
     llm_results = list(
         tqdm(
-            ThreadPool(args.question_parallelism).imap(
+            ThreadPool(args.task_parallelism).imap(
                 evaluate_question,
                 enumerate(zip(benchmark_df['questions'], benchmark_df['ground_truths'], benchmark_df['context'])),
             ),
@@ -226,8 +197,8 @@ def benchmark_llm(i_llm_name_llm, with_context=True):
     return llm_results
 
 
-results_list = list(ThreadPool(args.model_parallelism).imap(lambda x: benchmark_llm(x, with_context=True), list(enumerate(llms.items()))))
-results_list += list(ThreadPool(args.model_parallelism).imap(lambda x: benchmark_llm(x, with_context=False), list(enumerate(llms.items()))))
+results_list = list(ThreadPool(args.experiment_parallelism).imap(lambda x: benchmark_llm(x, with_context=True), list(enumerate(llms.items()))))
+results_list += list(ThreadPool(args.experiment_parallelism).imap(lambda x: benchmark_llm(x, with_context=False), list(enumerate(llms.items()))))
 
 os.makedirs(args.outpath, exist_ok=True)
 

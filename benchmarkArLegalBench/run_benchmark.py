@@ -22,9 +22,6 @@ logger = logging.getLogger(__name__)
 # Check and create necessary directories
 os.makedirs('experiment_results', exist_ok=True)
 
-experiment_parallelism = 50
-task_parallelism = 50
-
 
 def config2llm(model_config):
     from llama_index.core import PromptTemplate
@@ -114,13 +111,7 @@ def run_benchmarks():
     llm_config = yaml.safe_load(open('../llm_config.yaml', 'r', encoding='utf8'))
     llms = {model_name: config2llm(model_config) for model_name, model_config in llm_config['models'].items()}
 
-    dataset_files = [
-        './tasks/consumer_contract/test/',
-        './tasks/contract_qa/test/',
-        './tasks/privacy_policy_entailment/test/',
-        './tasks/privacy_policy_qa/test/',
-    ]
-    dataset_files = [f for path in dataset_files for f in glob.glob(path + '*.json')]
+    dataset_files = [f for path in llm_config['ArLegalBench']['dataset_files'] for f in glob.glob(path + '*.json')]
     task_names = [Path(f).parent.parent.stem for f in dataset_files]
     datasets = {Path(f).parent.parent.stem: load_dataset(f) for f in dataset_files}
 
@@ -150,6 +141,7 @@ def run_benchmarks():
                 clause=dataset_entry['contract'],
             )
 
+            logger.debug(f'Prompt: {prompt}')
             response = llm.complete(prompt)
             prediction = postprocess_prediction(response.text.strip())
             logger.info(f'Prediction: {prediction}')
@@ -161,7 +153,12 @@ def run_benchmarks():
             }
 
         experiment_results = list(
-            tqdm(ThreadPool(task_parallelism).imap(model_predict, dataset), desc='Dataset Entries', total=len(dataset), leave=False),
+            tqdm(
+                ThreadPool(llm_config['ArLegalBench']['task_parallelism']).imap(model_predict, dataset),
+                desc='Dataset Entries',
+                total=len(dataset),
+                leave=False,
+            ),
         )
 
         all_true_labels = [entry['true_label'] for entry in experiment_results]
@@ -199,7 +196,12 @@ def run_benchmarks():
     logger.info(f'Running {len(experiments)} experiments')
 
     return list(
-        tqdm(ThreadPool(experiment_parallelism).imap(lambda x: process_run(*x), experiments), desc='Models', total=len(experiments), leave=False)
+        tqdm(
+            ThreadPool(llm_config['ArLegalBench']['experiment_parallelism']).imap(lambda x: process_run(*x), experiments),
+            desc='Models',
+            total=len(experiments),
+            leave=False,
+        )
     )
 
 

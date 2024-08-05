@@ -188,7 +188,11 @@ class DspyLlamaIndexWrapper(LM):
     def _get_choice_text(self, choice: dict[str, Any]) -> str:
         # if self.model_type == 'chat':
         #     return choice['message']['content']
-        return choice['text']
+        if 'text' in choice:
+            return choice['text']
+        elif 'message' in choice:
+            return choice['message']['content']
+        raise ValueError('Could not find text in choice')
 
     def __call__(
         self,
