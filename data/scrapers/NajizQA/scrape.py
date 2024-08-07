@@ -19,7 +19,7 @@ for item in catmap:
     id2label[item['id']] = item['name']
 
 # write to file
-with open('najiz_categories.json', 'w') as f:
+with open('najiz_categories.json', 'w', encoding='utf8') as f:
     json.dump(id2label, f, indent=4)
 
 for item in data:

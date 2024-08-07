@@ -101,7 +101,7 @@ def generate_experiment_id(model_name, technique_name, prompt):
 
 
 def postprocess_prediction(prediction: str) -> str:
-    return prediction.replace('الصلة', 'صلة').replace('أ', "ا").strip().split('\n')[0].strip('.').strip()
+    return prediction.replace('الصلة', 'صلة').replace('أ', 'ا').strip().split('\n')[0].strip('.').strip()
 
 
 def run_benchmarks():

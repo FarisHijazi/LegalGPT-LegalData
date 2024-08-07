@@ -110,11 +110,11 @@ print('=================')
 ###############################################
 
 
-config = EasyDict(yaml.safe_load(open(args.config_path)))
+config = EasyDict(yaml.safe_load(open(args.config_path, encoding='utf8')))
 config
 
 
-benchmark_df = pd.DataFrame(json.loads(open(args.dataset_path, 'r').read()))
+benchmark_df = pd.DataFrame(json.loads(open(args.dataset_path, 'r', encoding='utf8').read()))
 
 # use args.limit
 if args.sample_size is not None and args.sample_size < len(benchmark_df):

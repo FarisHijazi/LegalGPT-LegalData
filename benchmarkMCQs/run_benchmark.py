@@ -482,5 +482,5 @@ if __name__ == '__main__':
     # Register the custom representer
     yaml.SafeDumper.add_multi_representer(object, my_representer)
 
-    with open(f'llm_results_{timestamp}.yaml', 'w') as file:
+    with open(f'llm_results_{timestamp}.yaml', 'w', encoding='utf8') as file:
         yaml.safe_dump(llm_results, file, default_flow_style=False, sort_keys=False, allow_unicode=True, encoding='utf8')
