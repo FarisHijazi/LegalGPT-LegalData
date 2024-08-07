@@ -30,22 +30,23 @@ def config2llm(model_config):
     from copy import deepcopy
 
     params = deepcopy(model_config['params'])
-    if 'query_wrapper_prompt' in model_config['params']:
-        from llama_index.core import PromptTemplate
-
-        params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
-
-    def messages_to_prompt(messages):
-        sep = model_config['params']['messages_to_prompt']['separator']
-        footer = model_config['params']['messages_to_prompt']['footer']
-
-        return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=x) for x in messages]) + footer
 
     if model_config['params'] is not None:
-        params['messages_to_prompt'] = messages_to_prompt
+        if 'query_wrapper_prompt' in model_config['params']:
+            from llama_index.core import PromptTemplate
 
-    if 'completion_to_prompt' in model_config['params']:
-        params['completion_to_prompt'] = lambda x: model_config['params']['query_wrapper_prompt'].format(query_str=x)
+            params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
+
+        def messages_to_prompt(messages):
+            sep = model_config['params']['messages_to_prompt']['separator']
+            footer = model_config['params']['messages_to_prompt']['footer']
+            return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=(x)) for x in messages]) + footer
+
+        if 'messages_to_prompt' in model_config['params']:
+            params['messages_to_prompt'] = messages_to_prompt
+
+        if 'completion_to_prompt' in model_config['params']:
+            params['completion_to_prompt'] = lambda completion: model_config['params']['query_wrapper_prompt'].format(query_str=completion)
 
     module_name, class_name = model_config['class'].rsplit('.', 1)
 

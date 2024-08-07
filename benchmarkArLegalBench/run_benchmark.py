@@ -35,30 +35,28 @@ def config2llm(model_config):
     from copy import deepcopy
 
     params = deepcopy(model_config['params'])
-    if 'query_wrapper_prompt' in model_config['params']:
-        params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
 
-    def messages_to_prompt(messages):
-        sep = model_config['params']['messages_to_prompt']['separator']
-        footer = model_config['params']['messages_to_prompt']['footer']
+    if model_config['params'] is not None:
+        if 'query_wrapper_prompt' in model_config['params']:
+            from llama_index.core import PromptTemplate
 
-        return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=x) for x in messages]) + footer
+            params['query_wrapper_prompt'] = PromptTemplate(model_config['params']['query_wrapper_prompt'])
 
-    if 'messages_to_prompt' in model_config['params']:
-        params['messages_to_prompt'] = messages_to_prompt
+        def messages_to_prompt(messages):
+            sep = model_config['params']['messages_to_prompt']['separator']
+            footer = model_config['params']['messages_to_prompt']['footer']
+            return sep.join([model_config['params']['messages_to_prompt'][x.role].format(query_str=(x)) for x in messages]) + footer
 
-    if 'completion_to_prompt' in model_config['params']:
-        params['completion_to_prompt'] = lambda x: model_config['params']['query_wrapper_prompt'].format(query_str=x)
+        if 'messages_to_prompt' in model_config['params']:
+            params['messages_to_prompt'] = messages_to_prompt
+
+        if 'completion_to_prompt' in model_config['params']:
+            params['completion_to_prompt'] = lambda completion: model_config['params']['query_wrapper_prompt'].format(query_str=completion)
 
     module_name, class_name = model_config['class'].rsplit('.', 1)
 
-    # Importing the module
     module = importlib.import_module(module_name)
-
-    # Getting the class from the module
     Class = getattr(module, class_name)
-
-    # Creating an instance of the class with the parameters
     return Class(**params)
 
 
@@ -103,7 +101,7 @@ def generate_experiment_id(model_name, technique_name, prompt):
 
 
 def postprocess_prediction(prediction: str) -> str:
-    return prediction.replace('الصلة', 'صلة')
+    return prediction.replace('الصلة', 'صلة').replace('أ', "ا").strip().split('\n')[0].strip('.').strip()
 
 
 def run_benchmarks():
@@ -148,7 +146,7 @@ def run_benchmarks():
             return {
                 'question': dataset_entry['question'],
                 'contract': dataset_entry['contract'],
-                'true_label': dataset_entry['answer'],
+                'true_label': postprocess_prediction(dataset_entry['answer']),
                 'predictions': prediction,
             }
 
