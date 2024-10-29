@@ -64,7 +64,7 @@ parser.add_argument('--ocr_save_annotated_images', default=False, action='store_
 parser.add_argument(
     '--ocr',
     default='google',
-    choices=['google', 'azure'],
+    choices=['google', 'azure', 'azuredocumentanalysis'],
     help='choose OCR provider: google or azure',
 )
 # add argument list to whitelist specific file extensions
@@ -94,11 +94,21 @@ if args.ocr == 'google':
 
     # Supported mime_type: application/pdf, image/tiff, image/gif
     google_vision_client = vision_v1.ImageAnnotatorClient()
-else:
+elif args.ocr == 'azure':
     from azure.cognitiveservices.vision.computervision import ComputerVisionClient
     from msrest.authentication import CognitiveServicesCredentials
 
-    computervision_client = ComputerVisionClient(os.environ['VISION_ENDPOINT'], CognitiveServicesCredentials(os.environ['VISION_KEY']))
+    azure_computervision_client = ComputerVisionClient(os.environ['VISION_ENDPOINT'], CognitiveServicesCredentials(os.environ['VISION_KEY']))
+elif args.ocr == 'azuredocumentanalysis':
+    from azure.ai.formrecognizer import DocumentAnalysisClient
+    from azure.core.credentials import AzureKeyCredential
+
+    # Initialize the DocumentAnalysisClient
+    document_analysis_client = DocumentAnalysisClient(
+        endpoint=os.environ['FORM_RECOGNIZER_ENDPOINT'], credential=AzureKeyCredential(os.environ['FORM_RECOGNIZER_KEY'])
+    )
+else:
+    raise ValueError('Invalid OCR provider')
 
 
 def read_file_content(file_path):
@@ -214,7 +224,7 @@ def azure_ocr_single_image(image: bytes):
     This API call can also extract handwriting style text (not shown).
     '''
 
-    read_response = computervision_client.read_in_stream(io.BytesIO(image), raw=True)
+    read_response = azure_computervision_client.read_in_stream(io.BytesIO(image), raw=True)
 
     # Get the operation location (URL with an ID at the end) from the response
     read_operation_location = read_response.headers['Operation-Location']
@@ -223,7 +233,7 @@ def azure_ocr_single_image(image: bytes):
 
     # Call the "GET" API and wait for it to retrieve the results
     while True:
-        read_result = computervision_client.get_read_result(operation_id)
+        read_result = azure_computervision_client.get_read_result(operation_id)
         if read_result.status not in ['notStarted', 'running']:
             break
         time.sleep(1)
@@ -238,7 +248,72 @@ def azure_ocr_single_image(image: bytes):
     return read_result
 
 
+def azuredocumentanalysis_ocr_single_image(image: bytes):
+    '''
+    OCR: Read File using the Read API, extract text - remote
+    This example will extract text in an image, then print results, line by line.
+    This API call can also extract handwriting style text (not shown).
+    '''
+    read_response = document_analysis_client.begin_analyze_document('prebuilt-document', io.BytesIO(image), locale='ar')
+    result = read_response.result()
+    return result
+
+    # # Get the operation location (URL with an ID at the end) from the response
+    # read_operation_location = read_response.headers['Operation-Location']
+    # # Grab the ID from the URL
+    # operation_id = read_operation_location.split('/')[-1]
+
+    # # Call the "GET" API and wait for it to retrieve the results
+    # while True:
+    #     read_result = azure_computervision_client.get_read_result(operation_id)
+    #     if read_result.status not in ['notStarted', 'running']:
+    #         break
+    #     time.sleep(1)
+
+    # # Print the detected text, line by line
+    # # if read_result.status == OperationStatusCodes.succeeded:
+    # #     for text_result in read_result.analyze_result.read_results:
+    # #         for line in text_result.lines:
+    # #             print(line.text)
+    # #             print(line.bounding_box)
+
+    # return read_result
+
+
 def azure_ocr_annotate_and_save(image_path, read_result, file_content=None):
+    # Get the image
+    image_path = Path(image_path)
+
+    # Create the new file name
+    new_file_name = image_path.parent / f'{image_path.stem}.annotated{image_path.suffix}'
+
+    if not args.ocr_save_annotated_images:
+        return
+
+    if file_content is None:
+        image = Image.open(BytesIO(file_content))
+    else:
+        image = Image.open(image_path)
+
+    # Create a draw object
+    draw = ImageDraw.Draw(image)
+
+    # Loop over each line in the result
+    for text_result in read_result['analyze_result']['read_results']:
+        for line in text_result['lines']:
+            # Get the bounding box coordinates
+            bounding_box = line['bounding_box']
+
+            # Draw rectangle
+            draw.rectangle([(bounding_box[0], bounding_box[1]), (bounding_box[4], bounding_box[5])], outline='red')
+
+    # Save the image
+    image.save(new_file_name)
+    print('azure_ocr_annotate_and_save() saved to ', new_file_name)
+
+
+def azuredocumentanalysis_ocr_annotate_and_save(image_path, read_result, file_content=None):
+    raise NotImplementedError('azuredocumentanalysis_ocr_annotate_and_save() not implemented')
     # Get the image
     image_path = Path(image_path)
 
@@ -462,7 +537,7 @@ def process_file(file_path_inpath):
                         }
                         for i in range(len(image_response.full_text_annotation.pages))  # don't worry there's only one page
                     ]
-                else:
+                elif args.ocr == 'azure':
                     azure_ocr_annotation_outpath = image_path + '.azure_ocr_annotation.json'
                     if os.path.isfile(azure_ocr_annotation_outpath):
                         with open(azure_ocr_annotation_outpath, 'r', encoding='utf8') as f:
@@ -490,6 +565,35 @@ def process_file(file_path_inpath):
                         for i, text_result in enumerate(read_result['analyze_result']['read_results'])
                         for line in text_result['lines']
                     ]
+                elif args.ocr == 'azuredocumentanalysis':
+                    azuredocumentanalysis_ocr_annotation_outpath = image_path + '.azuredocumentanalysis_ocr_annotation.json'
+                    if os.path.isfile(azuredocumentanalysis_ocr_annotation_outpath):
+                        with open(azuredocumentanalysis_ocr_annotation_outpath, 'r', encoding='utf8') as f:
+                            read_result = json.load(f)
+                            # print("using existing azure ocr result", azuredocumentanalysis_ocr_annotation_outpath)
+                    else:
+                        print('azuredocumentanalysis ocr annotation not found, running new OCR', azuredocumentanalysis_ocr_annotation_outpath)
+                        read_result = azuredocumentanalysis_ocr_single_image(content).to_dict()
+                        with open(azuredocumentanalysis_ocr_annotation_outpath, 'w', encoding='utf8') as f:
+                            json.dump(read_result, f, ensure_ascii=False, indent=4)
+                    try:
+                        azuredocumentanalysis_ocr_annotate_and_save(image_path, read_result, file_content=content)
+                    except Exception as e:
+                        print('\nERROR: Failed to annotate image', image_path, e)
+                    # TODO: double check this
+                    contents = [
+                        {
+                            'text': line.text,
+                            'page': i + 1,
+                            'section': None,
+                            'text_type': None,
+                            'languages': None,
+                        }
+                        for i, text_result in enumerate(read_result)
+                        for line in text_result['lines']
+                    ]
+                else:
+                    raise ValueError('Invalid OCR provider')
 
                 with open(image_path + '.organized.json', 'w', encoding='utf8') as f:
                     organized_object = {
@@ -563,6 +667,7 @@ def process_file(file_path_inpath):
 
 
 if __name__ == '__main__':
+    # process_file((Path("./raw/Legal Data/المركز الوطني للوثائق والمحفوظات/rules-regulations/pdfs/5a951ac514cb141cd2573a56e2c9a8a012ffd983226362988766e547ba98bd12.pdf"), args.data_root))
     file_paths = list(Path(args.data_root).rglob('**/*.*'))
     # reduce to whitelisted
     file_paths = [x for x in file_paths if x.suffix in args.whitelist]

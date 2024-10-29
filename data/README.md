@@ -104,7 +104,7 @@ This script operates differently depending on the file type, but the goal is to 
 
 ```bash
 
-python process.py raw --out_dir processed --whitelist .pdf --ocr azure --processors 50
+python process.py raw --out_dir processed --whitelist .pdf --ocr azuredocumentanalysis --processors 50
 
 #TODO: add step to take this unified JSON and fill the missing fields by reading the content with an LLM
 
