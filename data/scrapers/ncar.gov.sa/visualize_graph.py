@@ -2,8 +2,26 @@ import networkx as nx
 from pyvis.network import Network
 from tqdm.auto import tqdm
 import json
+import hashlib
 
 from scrape import get_id
+
+
+def hash_json(json_obj):
+    # Serialize JSON object with sorted keys
+    serialized_json = json.dumps(json_obj, sort_keys=True).encode('utf-8')
+    return hashlib.sha256(serialized_json).hexdigest()
+
+
+def get_id(item):
+    return hash_json(
+        {
+            'title_en': item['title_en'],
+            'title_ar': item['title_ar'],
+            'number': item['number'],
+            'approve_date': item['Approves'][0]['approve_date'],
+        }
+    )
 
 # https://towardsdatascience.com/visualizing-networks-in-python-d70f4cbeb259
 # TODO:
