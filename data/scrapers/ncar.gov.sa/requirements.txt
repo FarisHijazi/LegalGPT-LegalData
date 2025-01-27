@@ -1,3 +1,7 @@
 networkx
 pyvis
 tqdm
+backoff
+wrapt
+loguru
+joblib

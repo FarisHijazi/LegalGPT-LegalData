@@ -9,6 +9,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 /benchmarkQA/outputs/**
+**/cache/**
 
 # C extensions
 *.so

@@ -1,11 +1,39 @@
-# download PDFs
-import os
-from tqdm.auto import tqdm
-from multiprocessing.pool import Pool
+"""
+download PDFs
+"""
 import json
+import os
+from multiprocessing.pool import Pool
+
+import backoff
 import requests
+import wrapt
+from joblib import Memory
+from loguru import logger
+from tqdm.auto import tqdm
 
 
+@wrapt.decorator
+def loggo(wrapped, instance, args, kwargs):
+    logger.info(f"Calling {wrapped.__name__} with args={args} kwargs={kwargs}")
+    result = wrapped(*args, **kwargs)
+    logger.info(f"{wrapped.__name__} returned {result}")
+    return result
+
+
+memory = Memory("cache", verbose=0)
+
+
+@backoff.on_exception(
+    backoff.expo,
+    Exception,
+    max_tries=3,
+    on_backoff=lambda details: print(
+        f"Backing off {details['wait']} seconds after {details['tries']} tries"
+    ),
+)
+# @loggo
+@memory.cache()
 def download_file(url, outpath, position=None):
     response = requests.get(url, stream=True)
     total_size = int(response.headers.get('content-length', 0))
@@ -39,8 +67,8 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Download PDFs from ncar.gov.sa')
-    parser.add_argument('--output_dir', default='./pdfs', help='Output directory for PDFs')
-    parser.add_argument('--pages_data_populated', default='./pages_data_populated.json', help='path to pages_data_populated.json file')
+    parser.add_argument('--output_dir', default='./output/pdfs', help='Output directory for all data')
+    parser.add_argument('--pages_data_populated', default='./output/pages_data_populated.json', help='path to pages_data_populated.json file')
 
     args = parser.parse_args()
 
