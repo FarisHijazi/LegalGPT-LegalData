@@ -15,22 +15,20 @@ from tqdm.auto import tqdm
 
 @wrapt.decorator
 def loggo(wrapped, instance, args, kwargs):
-    logger.info(f"Calling {wrapped.__name__} with args={args} kwargs={kwargs}")
+    logger.info(f'Calling {wrapped.__name__} with args={args} kwargs={kwargs}')
     result = wrapped(*args, **kwargs)
-    logger.info(f"{wrapped.__name__} returned {result}")
+    logger.info(f'{wrapped.__name__} returned {result}')
     return result
 
 
-memory = Memory("cache", verbose=0)
+memory = Memory('cache', verbose=0)
 
 
 @backoff.on_exception(
     backoff.expo,
     Exception,
     max_tries=3,
-    on_backoff=lambda details: print(
-        f"Backing off {details['wait']} seconds after {details['tries']} tries"
-    ),
+    on_backoff=lambda details: print(f"Backing off {details['wait']} seconds after {details['tries']} tries"),
 )
 # @loggo
 @memory.cache()

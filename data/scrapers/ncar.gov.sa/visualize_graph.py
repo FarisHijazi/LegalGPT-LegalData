@@ -1,8 +1,9 @@
+import hashlib
+import json
+
 import networkx as nx
 from pyvis.network import Network
 from tqdm.auto import tqdm
-import json
-import hashlib
 
 from scrape import get_id
 
@@ -22,6 +23,7 @@ def get_id(item):
             'approve_date': item['Approves'][0]['approve_date'],
         }
     )
+
 
 # https://towardsdatascience.com/visualizing-networks-in-python-d70f4cbeb259
 # TODO:

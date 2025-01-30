@@ -1,7 +1,7 @@
+backoff
+joblib
+loguru
 networkx
 pyvis
 tqdm
-backoff
 wrapt
-loguru
-joblib

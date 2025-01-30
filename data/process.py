@@ -524,7 +524,8 @@ def process_file(file_path_inpath):
                 if args.ocr == 'google':
                     image_response = google_ocr_single_image(content)
                     try:
-                        google_ocr_annotate_and_save(image_path, image_response, file_content=content)
+                        if args.ocr_save_annotated_images:
+                            google_ocr_annotate_and_save(image_path, image_response, file_content=content)
                     except Exception as e:
                         print('\nERROR: Failed to annotate image', image_path, e)
                     contents = [
@@ -550,7 +551,8 @@ def process_file(file_path_inpath):
                             json.dump(read_result, f, ensure_ascii=False, indent=4)
 
                     try:
-                        azure_ocr_annotate_and_save(image_path, read_result, file_content=content)
+                        if args.ocr_save_annotated_images:
+                            azure_ocr_annotate_and_save(image_path, read_result, file_content=content)
                     except Exception as e:
                         print('\nERROR: Failed to annotate image', image_path, e)
                     # TODO: double check this
@@ -577,7 +579,8 @@ def process_file(file_path_inpath):
                         with open(azuredocumentanalysis_ocr_annotation_outpath, 'w', encoding='utf8') as f:
                             json.dump(read_result, f, ensure_ascii=False, indent=4)
                     try:
-                        azuredocumentanalysis_ocr_annotate_and_save(image_path, read_result, file_content=content)
+                        if args.ocr_save_annotated_images:
+                            azuredocumentanalysis_ocr_annotate_and_save(image_path, read_result, file_content=content)
                     except Exception as e:
                         print('\nERROR: Failed to annotate image', image_path, e)
                     # TODO: double check this
@@ -670,7 +673,7 @@ if __name__ == '__main__':
     # process_file((Path("./raw/Legal Data/المركز الوطني للوثائق والمحفوظات/rules-regulations/pdfs/5a951ac514cb141cd2573a56e2c9a8a012ffd983226362988766e547ba98bd12.pdf"), args.data_root))
     file_paths = list(Path(args.data_root).rglob('**/*.*'))
     # reduce to whitelisted
-    file_paths = [x for x in file_paths if x.suffix in args.whitelist]
+    file_paths = [x for x in file_paths if x.suffix in args.whitelist and x.is_file()]
 
     def init_main():
         with multiprocessing.Pool(args.processors) as pool:
