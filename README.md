@@ -16,6 +16,11 @@ In this folder `data/processed/ArabLegalEval` you will find the benchmark as fol
 
 Tested with Python 3.12
 
+```sh
+conda create -n ArabLegalEval python=3.12 -y
+conda activate ArabLegalEval
+pip install -r requirements.txt
+```
 
 ## Citing this work
 

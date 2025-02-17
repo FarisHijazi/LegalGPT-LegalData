@@ -104,7 +104,11 @@ This script operates differently depending on the file type, but the goal is to 
 
 ```bash
 
-python process.py raw --out_dir processed --whitelist .pdf --ocr azuredocumentanalysis --processors 50
+python process.py raw --out_dir processed --whitelist .pdf --ocr azuredocumentanalysis --processors 10
+
+# and for specific subfolders:
+python process.py "raw/Legal Data/المركز الوطني للوثائق والمحفوظات" --out_dir "processed/Legal Data/المركز الوطني للوثائق والمحفوظات" --whitelist .pdf --ocr azuredocumentanalysis --processors 10 --danger_skip_hash_check
+
 
 #TODO: add step to take this unified JSON and fill the missing fields by reading the content with an LLM
 

@@ -1,5 +1,7 @@
+azure-ai-documentintelligence
+azure-ai-formrecognizer
 azure-ai-vision-imageanalysis
-azure-cognitiveservices-vision-computervision==0.9.0
+azure-cognitiveservices-vision-computervision
 dvc
 dvc-azure
 dvc-s3
@@ -8,6 +10,7 @@ google-cloud-vision
 joblib
 openai
 pandas
+pdf2image
 pdf2image
 pillow
 pre-commit
