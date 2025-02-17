@@ -1,0 +1,929 @@
+ArLegalBench:
+  consumer_contract:
+    Fewshots: "Given a text from a contract and a related question, answer the question\
+      \ only with أجل for Yes or لا for No in Arabic, don't add any extra details\
+      \ to your asnwer.\n\nContract: يظل المحتوى الخاص بك ملكًا لك ، مما يعني أنك\
+      \ تحتفظ بأي حقوق ملكية فكرية لديك في المحتوى الخاص بك. على سبيل المثال، لديك\
+      \ حقوق ملكية فكرية في المحتوى الإبداعي الذي تقوم بإنشائه، مثل المراجعات التي\
+      \ تكتبها. أو قد يكون لديك الحق في مشاركة المحتوى الإبداعي لشخص آخر إذا أعطوك\
+      \ إذنه. نحن بحاجة إلى إذن منك إذا كانت حقوق الملكية الفكرية الخاصة بك تقيد استخدامنا\
+      \ للمحتوى الخاص بك. أنت تمنح Google هذا الإذن من خلال هذا الترخيص. يغطي هذا\
+      \ الترخيص المحتوى الخاص بك إذا كان هذا المحتوى محميًا بحقوق الملكية الفكرية.\
+      \ هذا الترخيص لا يؤثر على حقوق الخصوصية الخاصة بك فقط عن حقوق الملكية الفكرية\
+      \ الخاصة بك هذا الترخيص لا يغطي هذه الأنواع من المحتوى: المعلومات المتاحة للجمهور\
+      \ والوقائعية التي تقدمها، مثل تصحيحات على عنوان شركة محلية. هذه المعلومات لا\
+      \ تتطلب ترخيصًا لأنها تعتبر معرفة عامة بأن الجميع أحرار في استخدامها. ردود الفعل\
+      \ التي تقدمها، مثل اقتراحات لتحسين خدماتنا. يتم تغطية التعليقات في قسم الاتصالات\
+      \ المتعلقة بالخدمة أدناه. نطاق هذا الترخيص هو: في جميع أنحاء العالم ، مما يعني\
+      \ أنه صالح في أي مكان في العالم غير حصري ، مما يعني أنه يمكنك ترخيص المحتوى\
+      \ الخاص بك للآخرين دون رسوم ، مما يعني أنه لا توجد رسوم على حقوق الترخيص هذه\
+      \ تسمح هذه الرخصة لـ Google باستضافة المحتوى الخاص بك وإعادة إنتاجه وتوزيعه\
+      \ والتواصل معه واستخدامه على سبيل المثال ، لحفظ المحتوى الخاص بك على أنظمتنا\
+      \ وجعله متاحًا من أي مكان تنشره أو تؤديه أو تعرضه علنًا. ويشمل ذلك استخدام الأنظمة\
+      \ والخوارزميات الآلية لتحليل المحتوى الخاص بك: بالنسبة إلى الرسائل غير المرغوب\
+      \ فيها والبرامج الضارة والمحتوى غير القانوني للتعرف على الأنماط في البيانات،\
+      \ مثل تحديد وقت اقتراح ألبوم جديد في صور Google للحفاظ على الصور ذات الصلة معًا\
+      \ لتخصيص خدماتنا لك، مثل تقديم التوصيات ونتائج البحث الشخصية والمحتوى والإعلانات\
+      \ (التي يمكنك تغييرها أو إيقاف تشغيلها في إعدادات الإعلانات) يحدث هذا التحليل\
+      \ عند إرسال المحتوى واستلامه وعند تخزينه. استخدام المحتوى الذي قمت بمشاركته\
+      \ علنًا للترويج للخدمات. على سبيل المثال ، للترويج لتطبيق Google ، قد نقتبس\
+      \ مراجعة كتبتها. أو للترويج لـ Google Play ، قد نعرض لقطة شاشة للتطبيق الذي\
+      \ تقدمه في متجر Play. يستمر هذا الترخيص طالما أن المحتوى الخاص بك محمي بموجب\
+      \ حقوق الملكية الفكرية. إذا قمت بإزالة أي محتوى من خدماتنا يغطيه هذا الترخيص\
+      \ ، فستتوقف أنظمتنا عن إتاحة هذا المحتوى للجمهور في فترة زمنية معقولة. هناك\
+      \ استثناءان: إذا قمت بالفعل بمشاركة المحتوى الخاص بك مع الآخرين قبل إزالته.\
+      \ على سبيل المثال، إذا قمت بمشاركة صورة مع صديق قام بعد ذلك بعمل نسخة منها أو\
+      \ مشاركتها مرة أخرى، فقد تستمر هذه الصورة في الظهور في حساب Google الخاص بأصدقائك\
+      \ حتى بعد إزالتها من حسابك على Google. إذا جعلت المحتوى الخاص بك متاحًا من خلال\
+      \ خدمات الشركات الأخرى ، فمن الممكن أن تستمر محركات البحث ، بما في ذلك بحث Google\
+      \ ، في العثور على المحتوى الخاص بك وعرضه كجزء من نتائج البحث الخاصة بهم.\n\n\
+      Question: هل يُسمح لـ Google بإنشاء محتوى جديد استنادًا إلى المحتوى الذي أقوم\
+      \ بإنشائه وإعطائه؟\n Answer: أجل\n\n\n\nContract: يظل المحتوى الخاص بك ملكًا\
+      \ لك ، مما يعني أنك تحتفظ بأي حقوق ملكية فكرية لديك في المحتوى الخاص بك. على\
+      \ سبيل المثال، لديك حقوق ملكية فكرية في المحتوى الإبداعي الذي تقوم بإنشائه،\
+      \ مثل المراجعات التي تكتبها. أو قد يكون لديك الحق في مشاركة المحتوى الإبداعي\
+      \ لشخص آخر إذا أعطوك إذنه. نحن بحاجة إلى إذن منك إذا كانت حقوق الملكية الفكرية\
+      \ الخاصة بك تقيد استخدامنا للمحتوى الخاص بك. أنت تمنح Google هذا الإذن من خلال\
+      \ هذا الترخيص. يغطي هذا الترخيص المحتوى الخاص بك إذا كان هذا المحتوى محميًا\
+      \ بحقوق الملكية الفكرية. هذا الترخيص لا يؤثر على حقوق الخصوصية الخاصة بك فقط\
+      \ عن حقوق الملكية الفكرية الخاصة بك هذا الترخيص لا يغطي هذه الأنواع من المحتوى:\
+      \ المعلومات المتاحة للجمهور والوقائعية التي تقدمها، مثل تصحيحات على عنوان شركة\
+      \ محلية. هذه المعلومات لا تتطلب ترخيصًا لأنها تعتبر معرفة عامة بأن الجميع أحرار\
+      \ في استخدامها. ردود الفعل التي تقدمها، مثل اقتراحات لتحسين خدماتنا. يتم تغطية\
+      \ التعليقات في قسم الاتصالات المتعلقة بالخدمة أدناه. نطاق هذا الترخيص هو: في\
+      \ جميع أنحاء العالم ، مما يعني أنه صالح في أي مكان في العالم غير حصري ، مما\
+      \ يعني أنه يمكنك ترخيص المحتوى الخاص بك للآخرين دون رسوم ، مما يعني أنه لا توجد\
+      \ رسوم على حقوق الترخيص هذه تسمح هذه الرخصة لـ Google باستضافة المحتوى الخاص\
+      \ بك وإعادة إنتاجه وتوزيعه والتواصل معه واستخدامه على سبيل المثال ، لحفظ المحتوى\
+      \ الخاص بك على أنظمتنا وجعله متاحًا من أي مكان تنشره أو تؤديه أو تعرضه علنًا.\
+      \ ويشمل ذلك استخدام الأنظمة والخوارزميات الآلية لتحليل المحتوى الخاص بك: بالنسبة\
+      \ إلى الرسائل غير المرغوب فيها والبرامج الضارة والمحتوى غير القانوني للتعرف\
+      \ على الأنماط في البيانات، مثل تحديد وقت اقتراح ألبوم جديد في صور Google للحفاظ\
+      \ على الصور ذات الصلة معًا لتخصيص خدماتنا لك، مثل تقديم التوصيات ونتائج البحث\
+      \ الشخصية والمحتوى والإعلانات (التي يمكنك تغييرها أو إيقاف تشغيلها في إعدادات\
+      \ الإعلانات) يحدث هذا التحليل عند إرسال المحتوى واستلامه وعند تخزينه. استخدام\
+      \ المحتوى الذي قمت بمشاركته علنًا للترويج للخدمات. على سبيل المثال ، للترويج\
+      \ لتطبيق Google ، قد نقتبس مراجعة كتبتها. أو للترويج لـ Google Play ، قد نعرض\
+      \ لقطة شاشة للتطبيق الذي تقدمه في متجر Play. يستمر هذا الترخيص طالما أن المحتوى\
+      \ الخاص بك محمي بموجب حقوق الملكية الفكرية. إذا قمت بإزالة أي محتوى من خدماتنا\
+      \ يغطيه هذا الترخيص ، فستتوقف أنظمتنا عن إتاحة هذا المحتوى للجمهور في فترة زمنية\
+      \ معقولة. هناك استثناءان: إذا قمت بالفعل بمشاركة المحتوى الخاص بك مع الآخرين\
+      \ قبل إزالته. على سبيل المثال، إذا قمت بمشاركة صورة مع صديق قام بعد ذلك بعمل\
+      \ نسخة منها أو مشاركتها مرة أخرى، فقد تستمر هذه الصورة في الظهور في حساب Google\
+      \ الخاص بأصدقائك حتى بعد إزالتها من حسابك على Google. إذا جعلت المحتوى الخاص\
+      \ بك متاحًا من خلال خدمات الشركات الأخرى ، فمن الممكن أن تستمر محركات البحث\
+      \ ، بما في ذلك بحث Google ، في العثور على المحتوى الخاص بك وعرضه كجزء من نتائج\
+      \ البحث الخاصة بهم.\n\nQuestion: هل من ضمن حقوق Google القانونية إنشاء أعمال\
+      \ مشتقة تتكون من تعديلات على المحتوى الذي ينشئه المستخدمون؟\nAnswer: أجل\n\n\
+      Contract: نعمل باستمرار على تطوير تقنيات وميزات جديدة لتحسين خدماتنا. على سبيل\
+      \ المثال، نحن نستثمر في الذكاء الاصطناعي الذي يستخدم التعلم الآلي للكشف عن الرسائل\
+      \ غير المرغوب فيها والبرامج الضارة ومنعها، ولتزويدك بميزات مبتكرة مثل الترجمات\
+      \ الفورية. كجزء من هذا التحسين المستمر ، نقوم في بعض الأحيان بإضافة أو إزالة\
+      \ الميزات والوظائف ، وزيادة أو تقليل حدود خدماتنا ، والبدء في تقديم خدمات جديدة\
+      \ أو التوقف عن تقديم خدمات قديمة. إذا أجرينا تغييرات جوهرية تؤثر سلبًا على استخدامك\
+      \ لخدماتنا أو إذا توقفنا عن تقديم خدمة، فوفّر لك أيضًا إشعارًا مسبقًا معقولًا\
+      \ وفرصة لتصدير المحتوى الخاص بك من حسابك على Google باستخدام Google Takeout،\
+      \ باستثناء الحالات العاجلة مثل منع إساءة الاستخدام أو الاستجابة للمتطلبات القانونية\
+      \ أو معالجة مشكلات الأمان والتشغيل.\n\nQuestion: هل ستسمح لي Google دائمًا بنقل\
+      \ المحتوى الخاص بي من حسابي على Google؟\nAnswer: لا\n\nContract: نعمل باستمرار\
+      \ على تطوير تقنيات وميزات جديدة لتحسين خدماتنا. على سبيل المثال، نحن نستثمر\
+      \ في الذكاء الاصطناعي الذي يستخدم التعلم الآلي للكشف عن الرسائل غير المرغوب\
+      \ فيها والبرامج الضارة ومنعها، ولتزويدك بميزات مبتكرة مثل الترجمات الفورية.\
+      \ كجزء من هذا التحسين المستمر ، نقوم في بعض الأحيان بإضافة أو إزالة الميزات\
+      \ والوظائف ، وزيادة أو تقليل حدود خدماتنا ، والبدء في تقديم خدمات جديدة أو التوقف\
+      \ عن تقديم خدمات قديمة. إذا أجرينا تغييرات جوهرية تؤثر سلبًا على استخدامك لخدماتنا\
+      \ أو إذا توقفنا عن تقديم خدمة، فوفّر لك أيضًا إشعارًا مسبقًا معقولًا وفرصة لتصدير\
+      \ المحتوى الخاص بك من حسابك على Google باستخدام Google Takeout، باستثناء الحالات\
+      \ العاجلة مثل منع إساءة الاستخدام أو الاستجابة للمتطلبات القانونية أو معالجة\
+      \ مشكلات الأمان والتشغيل.\nQuestion: هل تحتفظ Google بسياسة يمكن بموجبها للمستخدمين\
+      \ في جميع الظروف تصدير بيانات Google الخاصة بهم على Google للتوقف عن تقديم خدمات\
+      \ معينة؟\nAnswer: لا\n\n\n\nContract: {clause}\nQuestion: {question}\n\nAnswer:"
+    Zero_Shot_detailed: 'You are a great legal expert helping a consumer understand
+      legal contracts and terms and conditions. The consumer gives you a text from
+      a contract and asks you a question. Both the contract and the question are in
+      Arabic language. You need to analyze the contract detailes and answer in Arabic
+      language only with أجل for Yes or لا for No. Don''t add any more details to
+      the answer. The final answer for the question should be based on the information
+      in the contract.
+
+
+      Contract: {clause}
+
+
+      Question: {question}
+
+
+      Answer:'
+    Zero_shot: 'Given a text from a contract and a related question, answer the question
+      in Arabic with only نعم for Yes or لا for No,, don''t add any extra details
+      to your asnwer.
+
+
+      Contract: {clause}
+
+
+      Question: {question}
+
+
+      Answer:'
+    one_shot: 'Given a text from a contract and a related question, answer the question
+      only with  أجل for Yes or لا for No in Arabic, don''t add any extra details
+      to your asnwer:
+
+
+
+      "Contract": "يظل المحتوى الخاص بك ملكًا لك ، مما يعني أنك تحتفظ بأي حقوق ملكية
+      فكرية لديك في المحتوى الخاص بك. على سبيل المثال، لديك حقوق ملكية فكرية في المحتوى
+      الإبداعي الذي تقوم بإنشائه، مثل المراجعات التي تكتبها. أو قد يكون لديك الحق
+      في مشاركة المحتوى الإبداعي لشخص آخر إذا أعطوك إذنه. نحن بحاجة إلى إذن منك إذا
+      كانت حقوق الملكية الفكرية الخاصة بك تقيد استخدامنا للمحتوى الخاص بك. أنت تمنح
+      Google هذا الإذن من خلال هذا الترخيص. يغطي هذا الترخيص المحتوى الخاص بك إذا
+      كان هذا المحتوى محميًا بحقوق الملكية الفكرية. هذا الترخيص لا يؤثر على حقوق الخصوصية
+      الخاصة بك فقط عن حقوق الملكية الفكرية الخاصة بك هذا الترخيص لا يغطي هذه الأنواع
+      من المحتوى: المعلومات المتاحة للجمهور والوقائعية التي تقدمها، مثل تصحيحات على
+      عنوان شركة محلية. هذه المعلومات لا تتطلب ترخيصًا لأنها تعتبر معرفة عامة بأن
+      الجميع أحرار في استخدامها. ردود الفعل التي تقدمها، مثل اقتراحات لتحسين خدماتنا.
+      يتم تغطية التعليقات في قسم الاتصالات المتعلقة بالخدمة أدناه. نطاق هذا الترخيص
+      هو: في جميع أنحاء العالم ، مما يعني أنه صالح في أي مكان في العالم غير حصري ،
+      مما يعني أنه يمكنك ترخيص المحتوى الخاص بك للآخرين دون رسوم ، مما يعني أنه لا
+      توجد رسوم على حقوق الترخيص هذه تسمح هذه الرخصة لـ Google باستضافة المحتوى الخاص
+      بك وإعادة إنتاجه وتوزيعه والتواصل معه واستخدامه على سبيل المثال ، لحفظ المحتوى
+      الخاص بك على أنظمتنا وجعله متاحًا من أي مكان تنشره أو تؤديه أو تعرضه علنًا.
+      ويشمل ذلك استخدام الأنظمة والخوارزميات الآلية لتحليل المحتوى الخاص بك: بالنسبة
+      إلى الرسائل غير المرغوب فيها والبرامج الضارة والمحتوى غير القانوني للتعرف على
+      الأنماط في البيانات، مثل تحديد وقت اقتراح ألبوم جديد في صور Google للحفاظ على
+      الصور ذات الصلة معًا لتخصيص خدماتنا لك، مثل تقديم التوصيات ونتائج البحث الشخصية
+      والمحتوى والإعلانات (التي يمكنك تغييرها أو إيقاف تشغيلها في إعدادات الإعلانات)
+      يحدث هذا التحليل عند إرسال المحتوى واستلامه وعند تخزينه. استخدام المحتوى الذي
+      قمت بمشاركته علنًا للترويج للخدمات. على سبيل المثال ، للترويج لتطبيق Google
+      ، قد نقتبس مراجعة كتبتها. أو للترويج لـ Google Play ، قد نعرض لقطة شاشة للتطبيق
+      الذي تقدمه في متجر Play. يستمر هذا الترخيص طالما أن المحتوى الخاص بك محمي بموجب
+      حقوق الملكية الفكرية. إذا قمت بإزالة أي محتوى من خدماتنا يغطيه هذا الترخيص ،
+      فستتوقف أنظمتنا عن إتاحة هذا المحتوى للجمهور في فترة زمنية معقولة. هناك استثناءان:
+      إذا قمت بالفعل بمشاركة المحتوى الخاص بك مع الآخرين قبل إزالته. على سبيل المثال،
+      إذا قمت بمشاركة صورة مع صديق قام بعد ذلك بعمل نسخة منها أو مشاركتها مرة أخرى،
+      فقد تستمر هذه الصورة في الظهور في حساب Google الخاص بأصدقائك حتى بعد إزالتها
+      من حسابك على Google. إذا جعلت المحتوى الخاص بك متاحًا من خلال خدمات الشركات
+      الأخرى ، فمن الممكن أن تستمر محركات البحث ، بما في ذلك بحث Google ، في العثور
+      على المحتوى الخاص بك وعرضه كجزء من نتائج البحث الخاصة بهم."
+
+
+
+      "Question": "هل يُسمح لـ Google بإنشاء محتوى جديد استنادًا إلى المحتوى الذي
+      أقوم بإنشائه وإعطائه؟",
+
+      "Answer": "أجل",
+
+
+      Contract: {clause}
+
+
+      Question: {question}
+
+
+      Answer:'
+  contract_qa:
+    Fewshots: 'Given a text from a contract and a related question, answer the question
+      with أجل for Yes or لا for No. Don''t add any more details to the answer.
+
+
+      contract:في حالة حدوث خرق للبيانات ينطوي على الوصول غير المصرح به أو الاستخدام
+      أو الكشف عن معلومات التعريف الشخصية (PII) ، يجب على الشركة إخطار الأفراد المتضررين
+      والسلطات التنظيمية ذات الصلة دون تأخير لا مبرر له وفقًا للقوانين واللوائح المعمول
+      بها. تتخذ الشركة أيضًا خطوات معقولة للتخفيف من الضرر الناجم عن الخرق ومنع الانتهاكات
+      المستقبلية.
+
+      Question: هل يناقش البند انتهاكات بيانات PII؟
+
+      Answer: أجل
+
+
+      contract:تخضع هذه الاتفاقية وتفسر وفقًا لقوانين ولاية كاليفورنيا
+
+      Question: هل يتنازل الشرط عن السرية؟
+
+      Answer: لا
+
+      df
+
+      contract: 1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب في
+      مصلحتهم.
+
+      Question: هل يناقش البند التعويض الشخصي؟
+
+      Answer: لا
+
+
+      contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان
+      على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+
+      Question: هل يناقش البند حل النزاعات؟"
+
+      Answer: أجل
+
+
+      contract: {clause}
+
+      Question: {question}
+
+      Answer:'
+    Zero_Shot_detailed: 'You are a great legal expert helping a consumer understand
+      legal contracts and terms and conditions. The consumer gives you a text from
+      a contract and asks you a Question. Both the contract and the Question are in
+      Arabic language. You need to analyze the contract detailes and Answer in Arabic
+      language only with أجل for Yes or لا for No. Don''t add any more details to
+      the Answer. The final answer for the question should be based on the information
+      in the contract:
+
+
+      contract: {clause}
+
+      Question: {question}
+
+      Answer:'
+    Zero_shot: "Given a text from a contract and a related question, answer the question\
+      \ with أجل for Yes or لا for No. Don't add any more details to the answer.\n\
+      \ncontract: {clause}\nQuestion: {question}\n Answer:"
+    one_shot: 'Given a text from a contract and a related question, answer the question
+      with أجل for Yes or لا for No. Don''t add any more details to the answer.
+
+
+      contract: في حالة وجود أي نزاع ينشأ عن أو يتعلق بهذه الاتفاقية ، يتفق الطرفان
+      على الخضوع للوساطة قبل اللجوء إلى التحكيم أو التقاضي.
+
+      Question: هل يناقش البند حل النزاعات؟"
+
+      Answer: أجل
+
+
+      "contract":"هل يناقش البند التعويض الشخصي؟"
+
+      "Answer":"لا"
+
+      "Question":"1- يكون هذا الاتفاق ملزماً للأطراف فيه ولمن يخلفهم ويحيلهم، ويصب
+      في مصلحتهم."
+
+
+
+      contract: {clause}
+
+      Question: {question}
+
+      Answer:'
+  privacy_policy_entailment:
+    Fewshots: '
+
+      Classify if the description of each clause is correct or incorrect. Use the
+      Arabic words صحيح if the description is correct and use the word غير صحيح if
+      the description is incorrect.
+
+
+
+      clause: المعلومات التي تقدمها. من أجل التسجيل كمستخدم مع Tinder ، سيُطلب منك
+      تسجيل الدخول باستخدام تسجيل الدخول إلى Facebook الخاص بك. إذا قمت بذلك ، فأنت
+      تفوضنا بالوصول إلى بعض معلومات حساب Facebook ، مثل ملفك الشخصي العام على Facebook
+      (بما يتفق مع إعدادات الخصوصية الخاصة بك في Facebook) ، وعنوان بريدك الإلكتروني
+      ، والاهتمامات ، والإعجابات ، والجنس ، وتاريخ الميلاد ، وتاريخ التعليم ، واهتمامات
+      العلاقة ، والمدينة الحالية ، والصور ، والوصف الشخصي ، وقائمة الأصدقاء ، ومعلومات
+      حول وصور أصدقائك على Facebook الذين قد يكونون أصدقاء Facebook مشتركين مع مستخدمي
+      Tinder الآخرين. سيُطلب منك أيضًا السماح لـ Tinder بجمع معلومات موقعك من جهازك
+      عند تنزيل الخدمة أو استخدامها. بالإضافة إلى ذلك ، قد نقوم بجمع وتخزين أي معلومات
+      شخصية تقدمها أثناء استخدام خدماتنا أو بطريقة أخرى. قد يشمل ذلك معلومات التعريف
+      ، مثل اسمك وعنوانك وعنوان بريدك الإلكتروني ورقم هاتفك ، وإذا كنت تتعامل معنا
+      ، المعلومات المالية. يمكنك أيضًا تزويدنا بصور ووصف شخصي ومعلومات حول جنسك وتفضيلاتك
+      للتوصيات ، مثل مسافة البحث والفئة العمرية والجنس. إذا كنت الدردشة مع مستخدمي
+      Tinder الآخرين، فإنك توفر لنا محتوى الدردشات الخاصة بك، وإذا كنت الاتصال بنا
+      مع خدمة العملاء أو استفسار آخر، فإنك توفر لنا مع محتوى هذا الاتصال.
+
+      description: وتصف السياسة جمع البريد الإلكتروني للمستخدم من قبل طرف في العقد.
+
+      Answer: صحيح
+
+
+
+
+      clause: إذا كنت تستخدم تطبيقنا، فإننا لا نستخدم معرفات الأجهزة المحمولة (المعرف
+      الفريد المعين لجهاز من قبل الشركة المصنعة) أو معرفات الإعلانات (لنظام التشغيل
+      iOS 6 والإصدارات الأحدث).
+
+      description: تصف السياسة جمع معرّف إعلان المستخدم (مثل معرّف إعلان Google) من
+      قبل طرف في العقد.
+
+      Answer: غير صحيح
+
+
+
+
+      clause: المعلومات التي نجمعها عنك بشكل عام. قد نقوم بجمع المعلومات الشخصية،
+      بما في ذلك البيانات الحساسة، وغيرها من المعلومات. \المعلومات الشخصية\ تعني معلومات
+      تعريفية فردية تسمح لنا بتحديد الهوية الفعلية والاتصال بشخص حي معين. تتضمن البيانات
+      الحساسة معلومات أو تعليقات أو محتوى (على سبيل المثال. الصور الفوتوغرافية والفيديو
+      والملف الشخصي ونمط الحياة) التي تقدمها اختياريًا والتي قد تكشف عن أصلك العرقي
+      و \/ أو جنسيتك و \/ أو دينك و \/ أو توجهك الجنسي. من خلال توفير البيانات الحساسة
+      لنا، فإنك توافق على جمع واستخدام والكشف عن البيانات الحساسة على النحو الذي تسمح
+      به قوانين الخصوصية المعمول بها. قد نقوم أيضًا بجمع معلومات تحديد الموقع الجغرافي
+      الخاصة بك بموافقتك. قد نجمع هذه المعلومات من خلال موقع ويب أو تطبيق جوال أو
+      خدمات أخرى عبر الإنترنت. باستخدام الخدمة ، فإنك تأذن لنا بجمع البيانات المتعلقة
+      بتقديم الخدمة وتحليلها والاحتفاظ بها. عندما تقدم معلومات شخصية من خلال خدمتنا
+      ، قد يتم إرسال المعلومات إلى خوادم موجودة في الولايات المتحدة وبلدان حول العالم.
+
+      description: تصف السياسة جمع بيانات الموقع غير المحددة للمستخدم من قبل طرف في
+      العقد.
+
+      Answer: صحيح
+
+
+
+
+      clause:إذا كنت تستخدم تطبيقنا، فإننا لا نستخدم معرفات الأجهزة المحمولة (المعرف
+      الفريد المعين لجهاز من قبل الشركة المصنعة) أو معرفات الإعلانات (لنظام التشغيل
+      iOS 6 والإصدارات الأحدث).
+
+      description:تصف السياسة جمع معرف جهاز المستخدم (مثل معرف Android) من قبل طرف
+      في العقد.
+
+      Answer: غير صحيح
+
+
+
+
+      clause: {clause}
+
+      description: {question}
+
+      Answer:
+
+      '
+    Zero_Shot_detailed: 'You are an expert legal professional who can understand legal
+      documents and answer questions related to legal context. Given a clause and
+      a description, classify if the description of each clause is correct or incorrect.
+      Use the Arabic words صحيح if the description is correct and use the word غير
+      صحيح if the description is incorrect. The Final answer should be the answer
+      as صحيح or غير صحيح only.
+
+
+
+
+      clause: {clause}
+
+      description: {question} Reply either with صحيح or غير صحيح
+
+      Answer:
+
+      '
+    Zero_shot: 'Classify if the description of each clause is correct or incorrect.
+      Use the Arabic words صحيح if the description is correct and use the word غير
+      صحيح if the description is incorrect. The Final answer should be the answer
+      as صحيح or غير صحيح only.
+
+
+
+      clause: {clause}
+
+      description: {question} Reply either with صحيح or غير صحيح
+
+      Answer:
+
+      '
+    one_shot: 'Classify if the description of each clause is correct or incorrect.
+      Use the Arabic words صحيح if the description is correct and use the word غير
+      صحيح if the description is incorrect. The Final answer should be the answer
+      one word as صحيح or غير صحيح only.
+
+
+
+      Clause: المعلومات التي تقدمها. من أجل التسجيل كمستخدم مع Tinder ، سيُطلب منك
+      تسجيل الدخول باستخدام تسجيل الدخول إلى Facebook الخاص بك. إذا قمت بذلك ، فأنت
+      تفوضنا بالوصول إلى بعض معلومات حساب Facebook ، مثل ملفك الشخصي العام على Facebook
+      (بما يتفق مع إعدادات الخصوصية الخاصة بك في Facebook) ، وعنوان بريدك الإلكتروني
+      ، والاهتمامات ، والإعجابات ، والجنس ، وتاريخ الميلاد ، وتاريخ التعليم ، واهتمامات
+      العلاقة ، والمدينة الحالية ، والصور ، والوصف الشخصي ، وقائمة الأصدقاء ، ومعلومات
+      حول وصور أصدقائك على Facebook الذين قد يكونون أصدقاء Facebook مشتركين مع مستخدمي
+      Tinder الآخرين. سيُطلب منك أيضًا السماح لـ Tinder بجمع معلومات موقعك من جهازك
+      عند تنزيل الخدمة أو استخدامها. بالإضافة إلى ذلك ، قد نقوم بجمع وتخزين أي معلومات
+      شخصية تقدمها أثناء استخدام خدماتنا أو بطريقة أخرى. قد يشمل ذلك معلومات التعريف
+      ، مثل اسمك وعنوانك وعنوان بريدك الإلكتروني ورقم هاتفك ، وإذا كنت تتعامل معنا
+      ، المعلومات المالية. يمكنك أيضًا تزويدنا بصور ووصف شخصي ومعلومات حول جنسك وتفضيلاتك
+      للتوصيات ، مثل مسافة البحث والفئة العمرية والجنس. إذا كنت الدردشة مع مستخدمي
+      Tinder الآخرين، فإنك توفر لنا محتوى الدردشات الخاصة بك، وإذا كنت الاتصال بنا
+      مع خدمة العملاء أو استفسار آخر، فإنك توفر لنا مع محتوى هذا الاتصال.
+
+      Description: وتصف السياسة جمع البريد الإلكتروني للمستخدم من قبل طرف في العقد.
+
+      Answer: صحيح
+
+
+
+
+
+      Clause: إذا كنت تستخدم تطبيقنا، فإننا لا نستخدم معرفات الأجهزة المحمولة (المعرف
+      الفريد المعين لجهاز من قبل الشركة المصنعة) أو معرفات الإعلانات (لنظام التشغيل
+      iOS 6 والإصدارات الأحدث).
+
+      Description: تصف السياسة جمع معرّف إعلان المستخدم (مثل معرّف إعلان Google) من
+      قبل طرف في العقد.
+
+      Answer: غير صحيح
+
+
+
+
+      clause: {clause}
+
+      description: {question}  Reply either with صحيح or غير صحيح
+
+      Answer:
+
+
+
+
+
+
+
+
+      '
+  privacy_policy_qa:
+    Fewshots: "Classify if the clause is relevant ذات صلة to answering the question\
+      \ or irrelevant غير ذات صلة. The final answer should be the phrase ذات الصلة\
+      \ or غير ذات صلة only.\n\nClause: لدينا هؤلاء الخبراء طرف ثالث إجراء اختبارات\
+      \ الاختراق العادية والتدقيق بشكل دوري الضوابط الأمنية 23andMes.\nQuestion:هل\
+      \ سبق لك بيع معلوماتي الشخصية لشركات أخرى لأغراض التسويق؟\nAnswer: ذات الصلة\n\
+      \nClause: لن يتم عكس أو إلغاء أو سحب أي بحث يتضمن بياناتك التي تم إجراؤها أو\
+      \ نشرها بالفعل قبل انسحابك من 23andMe Research.\nQuestion: سيتم مشاركة المعلومات\
+      \ مع طرف ثالث\nAnswer: ذات الصلة\n\n\n Clause : يمكن للشخص الذي أشرت إليه الاتصال\
+      \ بنا على privacy23andme.com لطلب إزالة هذه المعلومات من قاعدة البيانات الخاصة\
+      \ بنا.\n Question: هل تستخدم بياناتي لإجراء البحوث الطبية\n Answer : غير ذات\
+      \ صلة\n\nClause: يمكنك سحب موافقتك في أي وقت ، ومع ذلك ، فإن سحب موافقتك لن\
+      \ يؤثر على قانونية المعالجة بناءً على الموافقة قبل سحبها.\nQuestion:هل يتم استخدام\
+      \ معلومات الحمض النووي الخاصة بي بأي طريقة أخرى إلى جانب ما هو محدد؟\nAnswer:\
+      \ ذات الصلة\n\nClause:بما يتفق مع المتطلبات القانونية المعمول بها ، نتخذ خطوات\
+      \ معقولة تجاريًا لمطالبة الأطراف الثالثة بحماية معلوماتك الشخصية بشكل كاف ومعالجتها\
+      \ فقط وفقًا لتعليماتنا ؛\nQuestion:ما هي المعلومات التي تخزنها الشركة عني؟\n\
+      Answer: غير ذات صلة\n\nClause: قد تقرر مشاركة معلوماتك الشخصية مع الأصدقاء و\
+      \ \\/ أو أفراد الأسرة أو الأطباء أو غيرهم من المتخصصين في الرعاية الصحية و \\\
+      / أو الأفراد الآخرين خارج خدماتنا ، بما في ذلك من خلال خدمات الجهات الخارجية\
+      \ مثل الشبكات الاجتماعية وتطبيقات الجهات الخارجية التي تتصل بموقعنا على الويب\
+      \ وتطبيقات الجوال من خلال واجهة برمجة التطبيقات الخاصة بنا (\\API\\).\nQuestion:إذا\
+      \ تبين أن بياناتي الوراثية غير متوقعة ، فهل يمكن لعائلتي رؤيتها؟\nAnswer: ذات\
+      \ الصلة\n\nClause: إذا لم تعد ترغب في المشاركة في خدماتنا ، أو لم تعد ترغب في\
+      \ معالجة معلوماتك الشخصية ، فيمكنك حذف حسابك ومعلوماتك الشخصية في إعدادات حسابك.\n\
+      Question:ما مدى أمان موقع الويب الخاص بك من المتسللين؟\nAnswer: غير ذات صلة\n\
+      \n\n\n\nClause: {clause}\nQuestion: {question}\n\nAnswer:"
+    Zero_Shot_detailed: 'You are an expert legal professional who can understand legal
+      documents and answer questions related to legal context. Given a clause and
+      a question in Arabic, classify if the clause is relevant ذات صلة to answering
+      the question or irrelevant غير ذات صلة. Provide your Answer in Arabic with only
+      ذات صلة or غير ذات صلة.
+
+
+      Clause: {clause}
+
+      Question: {question}
+
+
+      Answer:'
+    Zero_shot: 'Classify if the clause is relevant ذات صلة to answering the question
+      or irrelevant غير ذات صلة. The final answer should be the phrase ذات الصلة or
+      غير ذات صلة only.
+
+
+
+      Clause: {clause}
+
+      Question: {question}
+
+
+      Answer:'
+    one_shot: 'Classify if the clause is relevant ذات صلة to answering the question
+      or irrelevant غير ذات صلة. The final answer should be the phrase ذات الصلة or
+      غير ذات صلة only.
+
+
+      Clause: لدينا هؤلاء الخبراء طرف ثالث إجراء اختبارات الاختراق العادية والتدقيق
+      بشكل دوري الضوابط الأمنية 23andMes.
+
+      Question:هل سبق لك بيع معلوماتي الشخصية لشركات أخرى لأغراض التسويق؟
+
+      Answer: ذات صلة
+
+
+      Clause:بما يتفق مع المتطلبات القانونية المعمول بها ، نتخذ خطوات معقولة تجاريًا
+      لمطالبة الأطراف الثالثة بحماية معلوماتك الشخصية بشكل كاف ومعالجتها فقط وفقًا
+      لتعليماتنا ؛
+
+      Question:ما هي المعلومات التي تخزنها الشركة عني؟
+
+      Answer: غير ذات صلة
+
+
+      Clause: {clause}
+
+      Question: {question}
+
+
+      Answer:'
+MCQs:
+  MCQs:
+    BAD_MCQ_QUESTION_GEN_SYS_TMPL: 'You are a law Professor.
+
+      Your task is to setup {num_questions_per_chunk} questions for an upcoming quiz.
+
+      The questions should be diverse in nature across the document.
+
+      Restrict the questions to the context information provided.
+
+      The questions must be multiple choice questions.
+
+      The questions should be difficult and tricky.
+
+      Make the distractors as tricky and ambiguous as possible.
+
+      The correct answer should always be the first option.
+
+      The questions should be in Arabic.
+
+      End each example question with ####.
+
+
+      Your questions should have simmilar style and format to the following examples:
+
+
+      {few_shot_examples}
+
+      '
+    EVAL_REFINE_TEMPLATE: 'We want to understand if the following information is present
+      in the context information: {query_str}
+
+      We have provided an existing YES/NO answer: {existing_answer}
+
+      We have the opportunity to refine the existing answer (only if needed) with
+      some more context below.
+
+      ------------
+
+      {context_msg}
+
+      ------------
+
+      If the existing answer was already YES, still answer YES. If the information
+      is present in the new context, answer YES. Otherwise answer NO.
+
+      '
+    EVAL_TEMPLATE: "Please tell if a given piece of information is supported by the\
+      \ context.\nYou need to answer with either YES or NO.\nAnswer YES if any of\
+      \ the context supports the information, even if most of the context is unrelated.\
+      \ Some examples are provided below.\n\nInformation: Apple pie is generally double-crusted.\n\
+      Context: An apple pie is a fruit pie in which the principal filling ingredient\
+      \ is apples.\nApple pie is often served with whipped cream, ice cream ('apple\
+      \ pie à la mode'), custard or cheddar cheese.\nIt is generally double-crusted,\
+      \ with pastry both above and below the filling; the upper crust may be solid\
+      \ or latticed (woven of crosswise strips).\nAnswer: YES\nInformation: Apple\
+      \ pies tastes bad.\nContext: An apple pie is a fruit pie in which the principal\
+      \ filling ingredient is apples.\nApple pie is often served with whipped cream,\
+      \ ice cream ('apple pie à la mode'), custard or cheddar cheese.\nIt is generally\
+      \ double-crusted, with pastry both above and below the filling; the upper crust\
+      \ may be solid or latticed (woven of crosswise strips).\nAnswer: NO\nInformation:\
+      \ {query_str}\nContext: {context_str}\nAnswer: \n"
+    FILTER_MCQ_PROMPT: 'You are a law Professor.
+
+      You have a bank of multiple choice questions.
+
+      Your task is to filter out the questions that are not relevant to the context
+      information provided.
+
+      The questions are in Arabic.
+
+      For the following context and question:
+
+      Question: {question}
+
+
+      Answer the following:
+
+      - Is the question complete, meaning it has a context, question, correct answer,
+      and distractors? 0 for NO, 1 for YES
+
+      - Is the question relevant to the context information? 0 for NO, 1 for YES
+
+      - Are the ditractors for the question all incorrect? 0 for NO, 1 for YES
+
+      - Is the correct answer the first option? 0 for NO, 1 for YES
+
+      - Does the question need the provided context to be answered? 0 for NO, 1 for
+      YES
+
+      - Are all the distractors unique? 0 for NO, 1 for YES
+
+
+      Provide the answers in the following format, Do not output anything else:
+
+      complete_mcq: 0 or 1
+
+      question_relevance: 0 or 1
+
+      distractors_correctness: 0 or 1
+
+      correct_answer_first: 0 or 1
+
+      context_needed: 0 or 1
+
+      unique_distractors: 0 or 1
+
+      total_score: between 0 and 6
+
+      '
+    MCQ_PROMPT: 'السؤال: {question}
+
+
+      الإجابة الصحيحة: {correct_answer}
+
+
+      الخيارات:
+
+      {options}
+
+      ####
+
+      '
+    MCQ_PROMPT_NO_CONTEXT: 'هذا سؤال قانوني للعامة في المملكة العربية السعودية. اختر
+      الإجابة الصحيحة!
+
+      سؤال: {question}
+
+      {options}
+
+
+      إجابة:
+
+      '
+    MCQ_PROMPT_WITH_CONTEXT: "هذا سؤال قانوني للعامة في المملكة العربية السعودية.\
+      \ اختر الإجابة الصحيحة!\n\nسياق: {Context}\nسؤال: {Question}\n{options}\n\n\
+      إجابة: \n"
+    MCQ_QUESTION_DELIMITER: '####'
+    MCQ_QUESTION_GEN_SYS_TMPL: 'You are a law Professor.
+
+      Your task is to setup {num_questions_per_chunk} question/s for an upcoming quiz.
+
+      The questions should be diverse in nature across the document.
+
+      Do not ask literal questions from the context information, but rather ask questions
+      that require understanding of the context.
+
+      The questions should be about logical reasoning, inference, or any other form
+      of higher-order thinking.
+
+      The questions must be multiple choice questions.
+
+      The distractors should be plausible and tricky.
+
+      The correct answer should always be the first option.
+
+      For each question, provide 3 distractors in addition to the correct answer.
+
+      The questions should be in Arabic.
+
+      End each example question with ####.
+
+
+      Your questions should have simmilar style and format to the following examples:
+
+
+      {few_shot_examples}
+
+      '
+    MCQ_QUESTION_GEN_USER_TMPL: 'Context information is below.
+
+      ---------------------
+
+      {context_str}
+
+      ---------------------
+
+      Given the context information and not prior knowledge, generate relevant questions.
+
+      '
+    QA_CORRECTNESS_SYS_TMPL: 'You are an expert evaluation system for a question answering
+      chatbot.
+
+
+      You are given the following information:
+
+      - a user query,
+
+      - a reference answer, and
+
+      - a generated answer.
+
+
+      Your job is to judge the relevance and correctness of the generated answer.
+
+      Output a single score that represents a holistic evaluation.
+
+      You must return your response in a line with only the score.
+
+      Do not return answers in any other format.
+
+      On a separate line provide your reasoning for the score as well.
+
+
+      Follow these guidelines for scoring:
+
+      - Your score has to be between 1 and 5, where 1 is the worst and 5 is the best.
+
+      - If the generated answer is not relevant to the user query,
+
+      you should give a score of 1.
+
+      - If the generated answer is relevant but contains mistakes,
+
+      you should give a score between 2 and 3.
+
+      - If the generated answer is relevant and fully correct,
+
+      you should give a score between 4 and 5.
+
+      '
+    QA_CORRECTNESS_USER_TMPL: '## User Query
+
+      {query}
+
+
+      ## Reference Answer
+
+      {reference_answer}
+
+
+      ## Generated Answer
+
+      {generated_answer}
+
+      '
+    QA_PROMPT: "Context information is below.\n---------------------\n{context_str}\n\
+      ---------------------\nGiven the context information and not prior knowledge,\
+      \ answer the query in Arabic.\nQuery: {query_str}\nAnswer: \n"
+    QA_PROMPT_V2: "Context information is below.\n---------------------\n{context_str}\n\
+      ---------------------\nGiven the context information and not prior knowledge,\
+      \ answer the query in Arabic.\nThe answer should be concise and to the point,\
+      \ make it as short as possible.\nAvoid answering with lists or numbered points.\n\
+      Give short and direct answers only.\nQuery: {query_str}\nAnswer: \n"
+    QA_TO_MCQ_COT_PROMPT: 'You are a law Professor.
+
+      You have a bank of questions that are in the form of question-answer pairs.
+
+      Your task is to convert the question-answer pairs to multiple choice questions.
+
+      The distractors should be plausible and tricky, and similar to the style of
+      the answer.
+
+      Make sure all distractors are incorrect by comparing them agains the answer.
+
+      If the answer is too long, shotren it to a reasonable length, similar to the
+      length of the distractors, by making the answer direct.
+
+      The questions are in Arabic.
+
+      For the following question and answer:
+
+      Question: {question}
+
+      Answer: {answer}
+
+      Write a multiple choice question with the correct answer and three distractors
+      in the following format:
+
+
+      <start_thought>
+
+      "A space for you to think step by step about 3 incorrect distractors, do it
+      in Arabic"
+
+      <end_thought>
+
+
+      "Repeat the quesiton"
+
+
+      1-"Correct Answer"
+
+      2-"Distractor 1"
+
+      3-"Distractor 2"
+
+      4-"Distractor 3"
+
+      '
+    QA_TO_MCQ_PROMPT: 'You are a law Professor.
+
+      You have a bank of questions that are in the form of question-answer pairs.
+
+      Your task is to convert the question-answer pairs to multiple choice questions.
+
+      The distractors should be plausible and tricky, and similar to the style of
+      the answer.
+
+      Make sure all distractors are incorrect.
+
+      If the answer is too long, shotren it to a reasonable length, similar to the
+      length of the distractors, by making the answer direct.
+
+      The questions are in Arabic.
+
+      For the following question and answer:
+
+      Question: {question}
+
+      Answer: {answer}
+
+      Write a multiple choice question with the correct answer and three distractors
+      in the following format:
+
+
+      "Repeat the quesiton"
+
+
+      1-"Correct Answer"
+
+      2-"Distractor 1"
+
+      3-"Distractor 2"
+
+      4-"Distractor 3"
+
+      '
+    QUESTION_GEN_SYS_TMPL: 'You are a law Professor.
+
+      Your task is to setup {num_questions_per_chunk} questions for an upcoming quiz.
+
+      The questions should be diverse in nature across the document.
+
+      Restrict the questions to the context information provided.
+
+      The questions should be in Arabic.
+
+      '
+    QUESTION_GEN_SYS_TMPL_V2: 'You are a law Professor.
+
+      Your task is to setup {num_questions_per_chunk} questions for an upcoming quiz.
+
+      The questions should be diverse in nature across the document.
+
+      Restrict the questions to the context information provided.
+
+      A student should be able to answer your questions using only the context information.
+
+      Avoid asking about dates or specific numbers.
+
+      Ask short questions only
+
+      Quesitons should be solvable with short answers
+
+      The questions should be in Arabic.
+
+      '
+    QUESTION_GEN_USER_TMPL: 'Context information is below.
+
+      ---------------------
+
+      {context_str}
+
+      ---------------------
+
+      Given the context information and not prior knowledge, generate the relevant
+      questions.
+
+      '
+QA:
+  QA:
+    ANSWER_SIMILARITY_TEMPLATE: Considering the reference answer and the new answer
+      to the following question, on a scale of 0 to 5, where 5 means the same and
+      0 means not at all similar, how similar in meaning is the new answer to the
+      reference answer? Respond with just a number and no additional text.
+    COLLECTION_NAME: ai_arxiv
+    RETRIEVAL_PRECISION_TEMPLATE: 'Considering the following question and context,
+      determine whether the context is relevant for answering the question. If the
+      context is relevant for answering the question, respond with true. If the context
+      is not relevant for answering the question, respond with false. Respond with
+      either true or false and no additional text.
+
+      '
+    TEXT_QA_NORAG_TEMPLATE: "You are an expert Q&A system that is trusted around the\
+      \ world for your factual accuracy.\nAlways answer the query using the provided\
+      \ context information, and not prior knowledge. Ensure your answers are fact-based\
+      \ and accurately reflect the context provided.\nSome rules to follow:\n1. Never\
+      \ directly reference the given context in your answer.\n2. Avoid statements\
+      \ like 'Based on the context, ...' or 'The context information ...' or anything\
+      \ along those lines.\n3. Focus on succinct answers that provide only the facts\
+      \ necessary, do not be verbose.Your answers should be max two sentences, up\
+      \ to 250 characters.\n\nAnswer the query in Arabic\nQuery: {query_str}\nAnswer:\
+      \ \n"
+    TEXT_QA_TEMPLATE: "You are an expert Q&A system that is trusted around the world\
+      \ for your factual accuracy.\nAlways answer the query using the provided context\
+      \ information, and not prior knowledge. Ensure your answers are fact-based and\
+      \ accurately reflect the context provided.\nSome rules to follow:\n1. Never\
+      \ directly reference the given context in your answer.\n2. Avoid statements\
+      \ like 'Based on the context, ...' or 'The context information ...' or anything\
+      \ along those lines.\n3. Focus on succinct answers that provide only the facts\
+      \ necessary, do not be verbose.Your answers should be max two sentences, up\
+      \ to 250 characters.\n---------------------\n{context_str}\n---------------------\n\
+      Given the context information and not prior knowledge, answer the query in Arabic.\n\
+      Query: {query_str}\nAnswer: \n"
