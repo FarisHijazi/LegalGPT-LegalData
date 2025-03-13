@@ -1,6 +1,6 @@
 outs:
-- md5: d751713988987e9331980363e24189ce.dir
-  size: 0
-  nfiles: 0
+- md5: 137b7127e2766d6b544d34c3a37f8c1a.dir
+  size: 2817206057
+  nfiles: 20338
   hash: md5
   path: Legal Cases
